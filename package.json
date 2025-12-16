@@ -1,0 +1,29 @@
+{
+  "name": "storyteller-match-story-builder",
+  "version": "1.0.0",
+  "description": "Build Stories from match events - CLI tool and preview viewer",
+  "type": "module",
+  "main": "src/index.js",
+  "bin": {
+    "build-story": "./src/cli.js"
+  },
+  "scripts": {
+    "build": "node src/cli.js",
+    "preview": "node src/server.js",
+    "dev": "npm run build && npm run preview",
+    "test": "node --test tests/**/*.test.js",
+    "validate": "node src/validate.js"
+  },
+  "keywords": [
+    "storyteller",
+    "sports",
+    "highlights",
+    "stories"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "ajv": "^8.12.0",
+    "ajv-formats": "^3.0.1"
+  }
+}
