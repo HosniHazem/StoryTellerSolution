@@ -1,0 +1,58 @@
+{
+  "pack_id": "6lqto88nzncqhvtv45a0rmcyc",
+  "title": "Celtic vs Kilmarnock",
+  "source": "match_events",
+  "created_at": "2025-12-16T13:32:26.525Z",
+  "metrics": {
+    "total_events": 102,
+    "total_goals": 4,
+    "score": "Celtic 4-0 Kilmarnock",
+    "match_date": "2025-11-09Z",
+    "venue": "Celtic Park"
+  },
+  "pages": [
+    {
+      "type": "cover",
+      "headline": "Celtic 4-0 Kilmarnock",
+      "subheadline": "Scottish Premiership • 9 November 2025",
+      "image": "../assets/21521989.jpg"
+    },
+    {
+      "type": "highlight",
+      "minute": 9,
+      "headline": "⚽ GOAL!",
+      "caption": "Celtic scores",
+      "image": "../assets/21522003.jpg",
+      "explanation": "Goal! Celtic 1, Kilmarnock 0. Johnny Kenny (Celtic) left footed shot from very close range to the bottom left corner. Assisted by Reo Hatate."
+    },
+    {
+      "type": "highlight",
+      "minute": 50,
+      "headline": "⚽ GOAL!",
+      "caption": "Celtic scores",
+      "image": "../assets/21521990.jpg",
+      "explanation": "Goal! Celtic 2, Kilmarnock 0. Kieran Tierney (Celtic) left footed shot from outside the box to the bottom right corner. Assisted by Liam Scales."
+    },
+    {
+      "type": "highlight",
+      "minute": 84,
+      "headline": "⚽ GOAL!",
+      "caption": "Celtic scores",
+      "image": "../assets/21521989.jpg",
+      "explanation": "Goal! Celtic 3, Kilmarnock 0. Daizen Maeda (Celtic) right footed shot from the right side of the box to the bottom right corner. Assisted by Arne Engels with a through ball."
+    },
+    {
+      "type": "highlight",
+      "minute": 92,
+      "headline": "⚽ Penalty Goal!",
+      "caption": "Celtic scores from the penalty spot",
+      "image": "../assets/21522014.jpg",
+      "explanation": "Goal! Celtic 4, Kilmarnock 0. Arne Engels (Celtic) converts the penalty with a right footed shot to the bottom left corner."
+    },
+    {
+      "type": "info",
+      "headline": "Celtic Wins! 🏆",
+      "body": "Full Time: Celtic 4-0 Kilmarnock\n\nVenue: Celtic Park\nCompetition: Scottish Premiership\n\nCeltic takes all three points with a dominant performance."
+    }
+  ]
+}
