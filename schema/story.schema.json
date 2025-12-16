@@ -11,6 +11,10 @@
   ],
   "additionalProperties": false,
   "properties": {
+    "pack_id": {
+      "type": "string",
+      "minLength": 1
+    },
     "story_id": {
       "type": "string",
       "minLength": 1
