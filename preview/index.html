@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Story Preview</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #000;
+      color: #fff;
+      overflow: hidden;
+      height: 100vh;
+    }
+
+    /* Story Container */
+    .story-container {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+    }
+
+    /* Story Page */
+    .story-page {
+      position: relative;
+      width: 100%;
+      max-width: 450px;
+      height: 800px;
+      background: #1a1a1a;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+    }
+
+    /* Page Background Image */
+    .page-background {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 0;
+    }
+
+    .page-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.8) 100%);
+      z-index: 1;
+    }
+
+    /* Page Content */
+    .page-content {
+      position: relative;
+      z-index: 2;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 40px 30px;
+    }
+
+    /* Header */
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .minute-badge {
+      background: rgba(255, 255, 255, 0.9);
+      color: #000;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .page-counter {
+      background: rgba(255, 255, 255, 0.2);
+      color: #fff;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    /* Main Content */
+    .page-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .headline {
+      font-size: 48px;
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 16px;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    }
+
+    .subheadline {
+      font-size: 18px;
+      font-weight: 500;
+      opacity: 0.9;
+      margin-bottom: 8px;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+    }
+
+    .caption {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    }
+
+    .explanation {
+      font-size: 16px;
+      line-height: 1.5;
+      opacity: 0.85;
+      max-width: 90%;
+      margin: 0 auto;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+    }
+
+    .body-text {
+      font-size: 16px;
+      line-height: 1.6;
+      opacity: 0.9;
+      text-align: left;
+      white-space: pre-line;
+    }
+
+    /* Navigation */
+    .navigation {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .nav-button {
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      color: #fff;
+      padding: 14px 28px;
+      border-radius: 30px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      backdrop-filter: blur(10px);
+    }
+
+    .nav-button:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.3);
+      transform: scale(1.05);
+    }
+
+    .nav-button:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .progress-bar {
+      flex: 1;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: #fff;
+      transition: width 0.3s ease;
+    }
+
+    /* Loading & Error States */
+    .loading, .error {
+      text-align: center;
+      padding: 40px;
+    }
+
+    .loading {
+      font-size: 18px;
+      opacity: 0.7;
+    }
+
+    .error {
+      color: #ff4444;
+      font-size: 16px;
+    }
+
+    /* Page Types Specific Styles */
+    .page-type-cover .headline {
+      font-size: 56px;
+    }
+
+    .page-type-info .page-main {
+      justify-content: flex-start;
+      text-align: left;
+    }
+
+    /* Responsive */
+    @media (max-width: 500px) {
+      .story-page {
+        max-width: 100%;
+        height: 100vh;
+        border-radius: 0;
+      }
+    }
+
+    /* Keyboard shortcuts hint */
+    .shortcuts {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.8);
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-size: 12px;
+      opacity: 0.6;
+      z-index: 10;
+    }
+  </style>
+</head>
+<body>
+  <div class="story-container">
+    <div id="story-viewer" class="story-page">
+      <div class="loading">Loading story...</div>
+    </div>
+  </div>
+
+  <div class="shortcuts">
+    ← → Navigate • Space = Next
+  </div>
+
+  <script>
+    // Story Viewer Logic
+    let story = null;
+    let currentPageIndex = 0;
+
+    // Load story data
+    async function loadStory() {
+      try {
+        const response = await fetch('/out/story.json');
+        if (!response.ok) throw new Error('Failed to load story');
+        story = await response.json();
+        renderPage(0);
+      } catch (error) {
+        document.getElementById('story-viewer').innerHTML = `
+          <div class="error">
+            <h2>Failed to load story</h2>
+            <p>${error.message}</p>
+            <p>Make sure to run "npm run build" first!</p>
+          </div>
+        `;
+      }
+    }
+
+    // Render a specific page
+    function renderPage(index) {
+      if (!story || index < 0 || index >= story.pages.length) return;
+
+      currentPageIndex = index;
+      const page = story.pages[index];
+      const viewer = document.getElementById('story-viewer');
+
+      // Build HTML based on page type
+      let html = '';
+
+      // Background image if present
+      if (page.image) {
+        html += `<img src="${page.image}" alt="" class="page-background">`;
+        html += `<div class="page-overlay"></div>`;
+      }
+
+      html += `<div class="page-content">`;
+
+      // Header
+      html += `<div class="page-header">`;
+      if (page.minute !== undefined) {
+        html += `<div class="minute-badge">${page.minute}'</div>`;
+      } else {
+        html += `<div></div>`;
+      }
+      html += `<div class="page-counter">${index + 1} / ${story.pages.length}</div>`;
+      html += `</div>`;
+
+      // Main content based on type
+      html += `<div class="page-main">`;
+      
+      if (page.type === 'cover') {
+        html += `<h1 class="headline">${page.headline}</h1>`;
+        if (page.subheadline) {
+          html += `<p class="subheadline">${page.subheadline}</p>`;
+        }
+      } else if (page.type === 'highlight') {
+        html += `<h1 class="headline">${page.headline}</h1>`;
+        if (page.caption) {
+          html += `<p class="caption">${page.caption}</p>`;
+        }
+        if (page.explanation) {
+          html += `<p class="explanation">${page.explanation}</p>`;
+        }
+      } else if (page.type === 'info') {
+        html += `<h2 class="headline">${page.headline}</h2>`;
+        if (page.body) {
+          html += `<p class="body-text">${page.body}</p>`;
+        }
+      }
+
+      html += `</div>`;
+
+      // Navigation
+      html += `<div class="navigation">`;
+      html += `
+        <button class="nav-button" onclick="previousPage()" ${index === 0 ? 'disabled' : ''}>
+          ← Previous
+        </button>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width: ${((index + 1) / story.pages.length) * 100}%"></div>
+        </div>
+        <button class="nav-button" onclick="nextPage()" ${index === story.pages.length - 1 ? 'disabled' : ''}>
+          Next →
+        </button>
+      `;
+      html += `</div>`;
+
+      html += `</div>`;
+
+      viewer.innerHTML = html;
+      viewer.className = `story-page page-type-${page.type}`;
+    }
+
+    // Navigation functions
+    function nextPage() {
+      if (currentPageIndex < story.pages.length - 1) {
+        renderPage(currentPageIndex + 1);
+      }
+    }
+
+    function previousPage() {
+      if (currentPageIndex > 0) {
+        renderPage(currentPageIndex - 1);
+      }
+    }
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ') {
+        e.preventDefault();
+        nextPage();
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        previousPage();
+      }
+    });
+
+    // Touch navigation (swipe)
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    document.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+    });
+
+    document.addEventListener('touchend', (e) => {
+      touchEndX = e.changedTouches[0].screenX;
+      handleSwipe();
+    });
+
+    function handleSwipe() {
+      const swipeThreshold = 50;
+      const diff = touchStartX - touchEndX;
+
+      if (Math.abs(diff) > swipeThreshold) {
+        if (diff > 0) {
+          nextPage();
+        } else {
+          previousPage();
+        }
+      }
+    }
+
+    // Initialize
+    loadStory();
+  </script>
+</body>
+</html>
