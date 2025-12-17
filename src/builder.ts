@@ -34,6 +34,7 @@ export class StoryBuilder {
   private assetsPath: string;
   private config: StoryConfig;
   private usedImages: Set<string> = new Set();
+  private playerCache: Map<string, string> = new Map();
 
   private static readonly IMAGE_POOL: string[] = [
     '21521989.jpg', '21521990.jpg', '21522003.jpg', '21522014.jpg',
@@ -57,6 +58,7 @@ export class StoryBuilder {
     this.events = this.eventsData.messages[0].message;
     this.matchInfo = this.eventsData.matchInfo;
     this.config = this.loadConfig();
+    this.loadPlayerNames();
   }
 
   /**
@@ -263,46 +265,92 @@ export class StoryBuilder {
         const leadMarginAfter = Math.abs(scoreAfterHome - scoreAfterAway);
         const isLate = minute >= 80;
 
+        // Get player name for headline
+        const playerName = this.getPlayerName(event.playerRef1);
+        const playerDisplay = playerName ? `${playerName} ` : '';
+
         let headline: string;
         let caption: string;
 
         if (scoreBeforeHome === 0 && scoreBeforeAway === 0) {
           // First goal of the match
-          headline = isPenalty ? '⚽ Breakthrough from the spot!' : '⚽ Breakthrough!';
+          if (playerName) {
+            headline = isPenalty 
+              ? `⚽ ${playerName} from the spot!` 
+              : `⚽ ${playerName} breaks through!`;
+          } else {
+            headline = isPenalty ? '⚽ Breakthrough from the spot!' : '⚽ Breakthrough!';
+          }
           caption = `${narrativeName} open the scoring and set the tone of the match.`;
         } else if (wasBehindBefore && postingTeamLeadingAfter) {
           // Comeback turning point
-          headline = '⚽ Turnaround!';
+          if (playerName) {
+            headline = `⚽ ${playerName} turns it around!`;
+          } else {
+            headline = '⚽ Turnaround!';
+          }
           caption = `${narrativeName} flip the game on its head with a crucial goal.`;
         } else if (goalForPostingTeam && wasLevelBefore && postingTeamLeadingAfter) {
           // Go-ahead goal from level
-          headline = '⚽ Go-ahead goal!';
+          if (playerName) {
+            headline = `⚽ ${playerName} puts ${narrativeName} ahead!`;
+          } else {
+            headline = '⚽ Go-ahead goal!';
+          }
           caption = `${narrativeName} edge in front as the pressure pays off.`;
         } else if (goalForPostingTeam && leadMarginAfter >= 2 && minute >= 60) {
           // Extending an already strong lead late on
-          headline = '⚽ Turning the screw!';
+          if (playerName) {
+            headline = `⚽ ${playerName} extends the lead!`;
+          } else {
+            headline = '⚽ Turning the screw!';
+          }
           caption = `${narrativeName} tighten their grip on the match with another goal.`;
         } else if (goalForPostingTeam && isLate) {
           // Late clincher
-          headline = isPenalty ? '⚽ Late penalty!' : '⚽ Late clincher!';
+          if (playerName) {
+            headline = isPenalty 
+              ? `⚽ ${playerName} from the spot!` 
+              : `⚽ ${playerName} seals it!`;
+          } else {
+            headline = isPenalty ? '⚽ Late penalty!' : '⚽ Late clincher!';
+          }
           caption = `${narrativeName} all but settle the contest in the closing stages.`;
         } else if (goalForPostingTeam && wasBehindBefore && scoreAfterHome === scoreAfterAway) {
           // From behind to level
-          headline = '⚽ Level again!';
+          if (playerName) {
+            headline = `⚽ ${playerName} levels it!`;
+          } else {
+            headline = '⚽ Level again!';
+          }
           caption = `${narrativeName} draw level and ramp up the pressure.`;
         } else if (goalForPostingTeam && wasBehindBefore && !postingTeamLeadingAfter) {
           // From behind but still behind (pull one back)
-          headline = '⚽ Back in it!';
+          if (playerName) {
+            headline = `⚽ ${playerName} pulls one back!`;
+          } else {
+            headline = '⚽ Back in it!';
+          }
           caption = `${narrativeName} pull one back and keep pushing.`;
         } else {
           // Generic but still contextual
           const hasPostingTeam = !!this.config.teamId;
           if (!goalForPostingTeam && hasPostingTeam) {
             // Opponent scores against us: keep calm, fan-friendly tone
-            headline = isPenalty ? '⚽ Penalty goal.' : '⚽ Goal.';
+            if (playerName) {
+              headline = isPenalty ? `⚽ ${playerName} from the spot.` : `⚽ ${playerName} scores.`;
+            } else {
+              headline = isPenalty ? '⚽ Penalty goal.' : '⚽ Goal.';
+            }
             caption = `${teamName} score, we stay composed and push on.`;
           } else {
-            headline = isPenalty ? '⚽ Penalty Goal!' : '⚽ GOAL!';
+            if (playerName) {
+              headline = isPenalty 
+                ? `⚽ ${playerName} from the spot!` 
+                : `⚽ ${playerName}!`;
+            } else {
+              headline = isPenalty ? '⚽ Penalty Goal!' : '⚽ GOAL!';
+            }
             const isExplicitPostingTeam =
               isPostingTeam && this.config.teamId && event.teamRef1 === this.config.teamId;
             const advantagePhrase = isExplicitPostingTeam
@@ -376,7 +424,17 @@ export class StoryBuilder {
 
       // Big chances (posts, dangerous misses/saves/blocks)
       if (classification.category === 'big_chance') {
-        const headline = event.type === 'post' ? '🚨 Off the Post!' : '🚨 Big Chance!';
+        const playerName = this.getPlayerName(event.playerRef1);
+        let headline: string;
+        if (event.type === 'post') {
+          if (playerName) {
+            headline = `🚨 ${playerName} hits the post!`;
+          } else {
+            headline = '🚨 Off the Post!';
+          }
+        } else {
+          headline = '🚨 Big Chance!';
+        }
         const caption = isPostingTeam
           ? `${narrativeName} go close to scoring`
           : `${narrativeName} threaten the goal`;
@@ -470,9 +528,33 @@ export class StoryBuilder {
         ? 'We Won! 🏆'
         : `${winner} Wins! 🏆`;
 
+    const context = this.getMatchContext();
+    const keyPlayers = this.getKeyPlayers();
+
     let body = `Full Time: ${homeTeam} ${homeGoals}-${awayGoals} ${awayTeam}\n\n`;
-    body += `Venue: ${this.matchInfo.venue.longName}\n`;
-    body += `Competition: ${this.matchInfo.competition.knownName}\n\n`;
+    body += `Venue: ${context.venue}\n`;
+    body += `Competition: ${context.competition}\n`;
+    
+    // Add match context if available
+    if (context.week) {
+      body += `Matchweek: ${context.week}\n`;
+    }
+    if (context.stage) {
+      body += `Stage: ${context.stage}\n`;
+    }
+    
+    body += `\n`;
+
+    // Add key players if available
+    if (keyPlayers.length > 0) {
+      const topScorer = keyPlayers[0];
+      if (topScorer.count > 1) {
+        body += `⚽ ${topScorer.name} scored ${topScorer.count} goals\n`;
+      } else if (keyPlayers.length > 0) {
+        body += `⚽ ${topScorer.name} on the scoresheet\n`;
+      }
+      body += `\n`;
+    }
 
     if (winner === 'Draw') {
       body += 'Both teams share the points in an evenly contested match.';
@@ -498,6 +580,49 @@ export class StoryBuilder {
   private getTeamName(teamRef: string): string {
     const team = this.matchInfo.contestant.find(c => c.id === teamRef);
     return team ? team.name : 'Unknown';
+  }
+
+  /**
+   * Load player names from squad JSON files
+   */
+  private loadPlayerNames(): void {
+    const projectRoot = join(__dirname, '..');
+    const homeTeamId = this.matchInfo.contestant[0].id;
+    const awayTeamId = this.matchInfo.contestant[1].id;
+
+    // Try to load squad files
+    const squadFiles = [
+      { path: join(projectRoot, 'data', 'celtic-squad.json'), teamId: homeTeamId },
+      { path: join(projectRoot, 'data', 'kilmarnock-squad.json'), teamId: awayTeamId }
+    ];
+
+    squadFiles.forEach(({ path, teamId }) => {
+      try {
+        const squadData = JSON.parse(readFileSync(path, 'utf-8'));
+        if (squadData.squad && Array.isArray(squadData.squad)) {
+          squadData.squad.forEach((squad: any) => {
+            if (squad.contestantId === teamId && squad.person) {
+              squad.person.forEach((person: any) => {
+                if (person.id && person.firstName && person.lastName) {
+                  const fullName = `${person.firstName} ${person.lastName}`;
+                  this.playerCache.set(person.id, fullName);
+                }
+              });
+            }
+          });
+        }
+      } catch {
+        // Squad file not found or invalid - continue without it
+      }
+    });
+  }
+
+  /**
+   * Get player name from player reference ID
+   */
+  private getPlayerName(playerRef: string | undefined): string | null {
+    if (!playerRef) return null;
+    return this.playerCache.get(playerRef) || null;
   }
 
   /**
@@ -592,6 +717,55 @@ export class StoryBuilder {
       month: 'long', 
       year: 'numeric' 
     });
+  }
+
+  /**
+   * Get match context information
+   */
+  private getMatchContext(): {
+    competition: string;
+    venue: string;
+    date: string;
+    week?: string;
+    stage?: string;
+  } {
+    return {
+      competition: this.matchInfo.competition.knownName || this.matchInfo.competition.name,
+      venue: this.matchInfo.venue.longName,
+      date: this.matchInfo.date,
+      week: (this.matchInfo as any).week,
+      stage: (this.matchInfo as any).stage?.name
+    };
+  }
+
+  /**
+   * Get key players from the match (scorers, assist providers)
+   */
+  private getKeyPlayers(): Array<{ name: string; role: 'scorer' | 'assist'; count: number }> {
+    const playerStats = new Map<string, { name: string; goals: number; assists: number }>();
+
+    this.events.forEach(event => {
+      if (event.type === 'goal' || event.type === 'penalty goal') {
+        const playerId = event.playerRef1;
+        if (playerId) {
+          const playerName = this.getPlayerName(playerId);
+          if (playerName) {
+            const stats = playerStats.get(playerId) || { name: playerName, goals: 0, assists: 0 };
+            stats.goals += 1;
+            playerStats.set(playerId, stats);
+          }
+        }
+      }
+    });
+
+    const keyPlayers: Array<{ name: string; role: 'scorer' | 'assist'; count: number }> = [];
+    playerStats.forEach((stats, playerId) => {
+      if (stats.goals > 0) {
+        keyPlayers.push({ name: stats.name, role: 'scorer', count: stats.goals });
+      }
+    });
+
+    return keyPlayers.sort((a, b) => b.count - a.count).slice(0, 3);
   }
 
   /**

@@ -271,6 +271,61 @@
       will-change: width;
     }
 
+    /* Auto-advance progress indicator */
+    .auto-advance-progress {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: rgba(255, 255, 255, 0.2);
+      z-index: 100;
+      overflow: hidden;
+    }
+
+    .auto-advance-fill {
+      height: 100%;
+      background: #fff;
+      transition: width linear;
+      will-change: width;
+    }
+
+    .auto-advance-progress.paused .auto-advance-fill {
+      animation-play-state: paused;
+    }
+
+    /* Page transition animations */
+    .story-page {
+      transition: opacity 0.4s ease-in-out, transform 0.4s ease-in-out;
+    }
+
+    .story-page.fade-in {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .story-page.fade-out {
+      opacity: 0;
+      transform: scale(0.98);
+    }
+
+    .story-page.slide-left {
+      transform: translateX(-100%);
+    }
+
+    .story-page.slide-right {
+      transform: translateX(100%);
+    }
+
+    /* Respect reduced motion preference */
+    @media (prefers-reduced-motion: reduce) {
+      .story-page,
+      .auto-advance-fill {
+        transition: none !important;
+        animation: none !important;
+      }
+    }
+
     /* Loading & Error States */
     .loading, .error {
       text-align: center;
@@ -311,6 +366,104 @@
       .shortcuts {
         display: none;
       }
+    }
+
+    /* Share Menu */
+    .share-menu {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1000;
+    }
+
+    .share-button {
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      color: #fff;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      font-size: 20px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    .share-button:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: scale(1.1);
+    }
+
+    .share-dropdown {
+      position: absolute;
+      top: 54px;
+      right: 0;
+      background: rgba(0, 0, 0, 0.95);
+      backdrop-filter: blur(20px);
+      border-radius: 12px;
+      padding: 8px;
+      min-width: 200px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-10px);
+      transition: all 0.2s ease;
+    }
+
+    .share-dropdown.open {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    .share-option {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s ease;
+      font-size: 14px;
+    }
+
+    .share-option:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .share-option-icon {
+      font-size: 18px;
+      width: 24px;
+      text-align: center;
+    }
+
+    /* Toast notification */
+    .toast {
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.9);
+      color: #fff;
+      padding: 12px 24px;
+      border-radius: 24px;
+      font-size: 14px;
+      z-index: 2000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+    }
+
+    .toast.show {
+      opacity: 1;
+      visibility: visible;
     }
 
     /* Prevent text selection on touch devices */
@@ -365,23 +518,115 @@
         transition-duration: 0.01ms !important;
       }
     }
+
+    /* Screen reader only content */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border-width: 0;
+    }
+
+    /* Focus visible styles for keyboard navigation */
+    .nav-button:focus-visible,
+    .share-button:focus-visible,
+    .share-option:focus-visible {
+      outline: 3px solid #fff;
+      outline-offset: 2px;
+    }
+
+    /* Skip to content link */
+    .skip-link {
+      position: absolute;
+      top: -40px;
+      left: 0;
+      background: #000;
+      color: #fff;
+      padding: 8px;
+      text-decoration: none;
+      z-index: 10000;
+    }
+
+    .skip-link:focus {
+      top: 0;
+    }
   </style>
 </head>
 <body>
   <div class="story-container">
-    <div id="story-viewer" class="story-page">
-      <div class="loading">Loading story...</div>
+    <div id="story-viewer" class="story-page" role="region" aria-label="Story viewer" aria-live="polite">
+      <div class="loading" role="status" aria-live="polite">Loading story...</div>
     </div>
   </div>
 
-  <div class="shortcuts">
+  <!-- Screen reader announcements -->
+  <div id="sr-announcements" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+
+  <a href="#story-viewer" class="skip-link">Skip to story content</a>
+
+  <div class="shortcuts" role="note" aria-label="Keyboard shortcuts">
     ← → Navigate • Space = Next
   </div>
+
+  <div class="share-menu">
+    <button class="share-button" id="share-button" aria-label="Share story" title="Share story">
+      <span>🔗</span>
+    </button>
+    <div class="share-dropdown" id="share-dropdown" role="menu" aria-label="Share options">
+      <div class="share-option" role="menuitem" tabindex="0" onclick="copyStoryLink()" onkeydown="handleShareKeydown(event, copyStoryLink)">
+        <span class="share-option-icon" aria-hidden="true">📋</span>
+        <span>Copy Link</span>
+      </div>
+      <div class="share-option" role="menuitem" tabindex="0" onclick="shareToTwitter()" onkeydown="handleShareKeydown(event, shareToTwitter)">
+        <span class="share-option-icon" aria-hidden="true">🐦</span>
+        <span>Share on Twitter</span>
+      </div>
+      <div class="share-option" role="menuitem" tabindex="0" onclick="shareToFacebook()" onkeydown="handleShareKeydown(event, shareToFacebook)">
+        <span class="share-option-icon" aria-hidden="true">📘</span>
+        <span>Share on Facebook</span>
+      </div>
+      <div class="share-option" role="menuitem" tabindex="0" onclick="downloadJSON()" onkeydown="handleShareKeydown(event, downloadJSON)">
+        <span class="share-option-icon" aria-hidden="true">💾</span>
+        <span>Download JSON</span>
+      </div>
+      <div class="share-option" role="menuitem" tabindex="0" onclick="exportAsImageSequence()" onkeydown="handleShareKeydown(event, exportAsImageSequence)">
+        <span class="share-option-icon" aria-hidden="true">🖼️</span>
+        <span>Export Images</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
 
   <script>
     // Story Viewer Logic
     let story = null;
     let currentPageIndex = 0;
+    let autoAdvanceTimer = null;
+    let autoAdvanceProgressTimer = null;
+    let isPaused = false;
+    const AUTO_ADVANCE_DURATION = 6000; // 6 seconds per page
+    const TRANSITION_DURATION = 400; // Match CSS transition duration
+
+    // Analytics tracking
+    const analytics = {
+      sessionStart: Date.now(),
+      pageViews: {},
+      timeOnPages: {},
+      currentPageStartTime: null,
+      totalPages: 0,
+      completed: false,
+      interactions: []
+    };
+
+    // Performance: Image preloading cache
+    const imageCache = new Map();
+    const preloadedImages = new Set();
 
     // Load story data
     async function loadStory() {
@@ -389,22 +634,139 @@
         const response = await fetch('/out/story.json');
         if (!response.ok) throw new Error('Failed to load story');
         story = await response.json();
+        analytics.totalPages = story.pages.length;
+        
+        // Preload all images in background
+        preloadStoryImages();
+        
+        // Track initial page view
+        trackPageView(0);
+        
         renderPage(0);
       } catch (error) {
         document.getElementById('story-viewer').innerHTML = `
-          <div class="error">
+          <div class="error" role="alert">
             <h2>Failed to load story</h2>
             <p>${error.message}</p>
             <p>Make sure to run "npm run build" first!</p>
           </div>
         `;
+        announceToScreenReader('Failed to load story');
+      }
+    }
+
+    // Preload story images for better performance
+    function preloadStoryImages() {
+      if (!story) return;
+      
+      story.pages.forEach((page, index) => {
+        if (page.image && !preloadedImages.has(page.image)) {
+          const img = new Image();
+          img.src = page.image;
+          img.loading = 'lazy'; // Use native lazy loading
+          imageCache.set(page.image, img);
+          preloadedImages.add(page.image);
+        }
+      });
+    }
+
+    // Track page view for analytics
+    function trackPageView(index) {
+      if (!story || index < 0 || index >= story.pages.length) return;
+      
+      const page = story.pages[index];
+      const pageId = `${page.type}-${index}`;
+      
+      // Track time on previous page
+      if (analytics.currentPageStartTime !== null) {
+        const previousPageId = Object.keys(analytics.timeOnPages).length > 0 
+          ? Object.keys(analytics.timeOnPages)[Object.keys(analytics.timeOnPages).length - 1]
+          : null;
+        if (previousPageId) {
+          const timeSpent = Date.now() - analytics.currentPageStartTime;
+          analytics.timeOnPages[previousPageId] = (analytics.timeOnPages[previousPageId] || 0) + timeSpent;
+        }
+      }
+      
+      // Start tracking current page
+      analytics.currentPageStartTime = Date.now();
+      analytics.pageViews[pageId] = (analytics.pageViews[pageId] || 0) + 1;
+      
+      // Check if story is completed
+      if (index === story.pages.length - 1) {
+        trackStoryCompletion();
+      }
+      
+      // Log analytics (in production, send to analytics service)
+      if (typeof console !== 'undefined' && console.log) {
+        console.log('[Analytics] Page view:', {
+          pageId,
+          pageType: page.type,
+          pageIndex: index,
+          totalPages: story.pages.length
+        });
+      }
+    }
+
+    // Track story completion
+    function trackStoryCompletion() {
+      if (analytics.completed) return;
+      
+      analytics.completed = true;
+      const totalTime = Date.now() - analytics.sessionStart;
+      
+      // Log completion (in production, send to analytics service)
+      if (typeof console !== 'undefined' && console.log) {
+        console.log('[Analytics] Story completed:', {
+          totalTime,
+          totalPages: analytics.totalPages,
+          pageViews: analytics.pageViews,
+          timeOnPages: analytics.timeOnPages
+        });
+      }
+    }
+
+    // Announce to screen readers
+    function announceToScreenReader(message) {
+      const announcements = document.getElementById('sr-announcements');
+      if (announcements) {
+        announcements.textContent = message;
+        // Clear after announcement
+        setTimeout(() => {
+          announcements.textContent = '';
+        }, 1000);
       }
     }
 
     // Render a specific page
-    function renderPage(index) {
+    function renderPage(index, skipTransition = false) {
       if (!story || index < 0 || index >= story.pages.length) return;
 
+      // Stop auto-advance during transition
+      stopAutoAdvance();
+
+      const page = story.pages[index];
+      const viewer = document.getElementById('story-viewer');
+
+      // Add fade-out transition if not skipping
+      if (!skipTransition && currentPageIndex !== index) {
+        viewer.classList.add('fade-out');
+        setTimeout(() => {
+          renderPageContent(index);
+          viewer.classList.remove('fade-out');
+          viewer.classList.add('fade-in');
+          setTimeout(() => {
+            viewer.classList.remove('fade-in');
+          }, TRANSITION_DURATION);
+        }, TRANSITION_DURATION / 2);
+        return;
+      }
+
+      renderPageContent(index);
+    }
+
+    // Render page content (separated for transition handling)
+    function renderPageContent(index) {
       currentPageIndex = index;
       const page = story.pages[index];
       const viewer = document.getElementById('story-viewer');
@@ -412,22 +774,31 @@
       // Build HTML based on page type
       let html = '';
 
-      // Background image if present
+      // Auto-advance progress bar (only if not last page)
+      if (index < story.pages.length - 1) {
+        html += `<div class="auto-advance-progress" id="auto-advance-progress">
+          <div class="auto-advance-fill" id="auto-advance-fill"></div>
+        </div>`;
+      }
+
+      // Background image if present (with lazy loading)
       if (page.image) {
-        html += `<img src="${page.image}" alt="" class="page-background">`;
-        html += `<div class="page-overlay"></div>`;
+        const cachedImg = imageCache.get(page.image);
+        const loadingAttr = cachedImg ? '' : 'loading="lazy"';
+        html += `<img src="${page.image}" alt="" class="page-background" ${loadingAttr} aria-hidden="true">`;
+        html += `<div class="page-overlay" aria-hidden="true"></div>`;
       }
 
       html += `<div class="page-content">`;
 
       // Header
-      html += `<div class="page-header">`;
+      html += `<div class="page-header" role="banner">`;
       if (page.minute !== undefined) {
-        html += `<div class="minute-badge">${page.minute}'</div>`;
+        html += `<div class="minute-badge" aria-label="Minute ${page.minute}">${page.minute}'</div>`;
       } else {
         html += `<div></div>`;
       }
-      html += `<div class="page-counter">${index + 1} / ${story.pages.length}</div>`;
+      html += `<div class="page-counter" aria-label="Page ${index + 1} of ${story.pages.length}">${index + 1} / ${story.pages.length}</div>`;
       html += `</div>`;
 
       // Main content based on type
@@ -453,18 +824,34 @@
         }
       }
 
+      // Screen reader announcement for page content
+      const pageDescription = page.type === 'cover' 
+        ? `Cover page: ${page.headline}`
+        : page.type === 'highlight'
+        ? `Highlight at minute ${page.minute}: ${page.headline}`
+        : `Info page: ${page.headline}`;
+      
+      // Announce after a short delay to allow page to render
+      setTimeout(() => {
+        announceToScreenReader(`${pageDescription}. Page ${index + 1} of ${story.pages.length}`);
+      }, 100);
+
       html += `</div>`;
 
       // Navigation
-      html += `<div class="navigation">`;
+      html += `<div class="navigation" role="navigation" aria-label="Story navigation">`;
       html += `
-        <button class="nav-button" onclick="previousPage()" ${index === 0 ? 'disabled' : ''}>
+        <button class="nav-button" onclick="previousPage()" ${index === 0 ? 'disabled' : ''} 
+                aria-label="Previous page" ${index === 0 ? 'aria-disabled="true"' : ''}>
           ← Previous
         </button>
-        <div class="progress-bar">
+        <div class="progress-bar" role="progressbar" aria-valuenow="${index + 1}" 
+             aria-valuemin="1" aria-valuemax="${story.pages.length}" 
+             aria-label="Story progress">
           <div class="progress-fill" style="width: ${((index + 1) / story.pages.length) * 100}%"></div>
         </div>
-        <button class="nav-button" onclick="nextPage()" ${index === story.pages.length - 1 ? 'disabled' : ''}>
+        <button class="nav-button" onclick="nextPage()" ${index === story.pages.length - 1 ? 'disabled' : ''}
+                aria-label="Next page" ${index === story.pages.length - 1 ? 'aria-disabled="true"' : ''}>
           Next →
         </button>
       `;
@@ -474,6 +861,101 @@
 
       viewer.innerHTML = html;
       viewer.className = `story-page page-type-${page.type}`;
+      viewer.setAttribute('aria-label', `${pageDescription}. Page ${index + 1} of ${story.pages.length}`);
+
+      // Track page view
+      trackPageView(index);
+
+      // Set up hover controls on first render
+      if (index === 0) {
+        setupAutoAdvanceControls();
+      }
+
+      // Start auto-advance after render (only if not last page)
+      if (index < story.pages.length - 1) {
+        startAutoAdvance();
+      }
+
+      // Preload next page image for smoother transitions
+      if (index < story.pages.length - 1 && story.pages[index + 1].image) {
+        const nextImage = story.pages[index + 1].image;
+        if (!preloadedImages.has(nextImage)) {
+          const img = new Image();
+          img.src = nextImage;
+          img.loading = 'lazy';
+          imageCache.set(nextImage, img);
+          preloadedImages.add(nextImage);
+        }
+      }
+    }
+
+    // Auto-advance functionality
+    function startAutoAdvance() {
+      stopAutoAdvance();
+      
+      if (currentPageIndex >= story.pages.length - 1) return;
+      if (isPaused) return;
+
+      const progressBar = document.getElementById('auto-advance-fill');
+      if (!progressBar) return;
+
+      // Reset and animate progress bar
+      progressBar.style.width = '0%';
+      progressBar.style.transition = `width ${AUTO_ADVANCE_DURATION}ms linear`;
+
+      // Use requestAnimationFrame for smoother animation
+      let startTime = Date.now();
+      const animate = () => {
+        if (isPaused) return;
+        
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min((elapsed / AUTO_ADVANCE_DURATION) * 100, 100);
+        progressBar.style.width = `${progress}%`;
+
+        if (progress < 100) {
+          autoAdvanceProgressTimer = requestAnimationFrame(animate);
+        } else {
+          // Auto-advance to next page
+          nextPage();
+        }
+      };
+      autoAdvanceProgressTimer = requestAnimationFrame(animate);
+
+      // Fallback timer (in case animation frame doesn't complete)
+      autoAdvanceTimer = setTimeout(() => {
+        if (!isPaused && currentPageIndex < story.pages.length - 1) {
+          nextPage();
+        }
+      }, AUTO_ADVANCE_DURATION);
+    }
+
+    function stopAutoAdvance() {
+      if (autoAdvanceTimer) {
+        clearTimeout(autoAdvanceTimer);
+        autoAdvanceTimer = null;
+      }
+      if (autoAdvanceProgressTimer) {
+        cancelAnimationFrame(autoAdvanceProgressTimer);
+        autoAdvanceProgressTimer = null;
+      }
+    }
+
+    function pauseAutoAdvance() {
+      isPaused = true;
+      stopAutoAdvance();
+      const progressBar = document.getElementById('auto-advance-progress');
+      if (progressBar) {
+        progressBar.classList.add('paused');
+      }
+    }
+
+    function resumeAutoAdvance() {
+      isPaused = false;
+      const progressBar = document.getElementById('auto-advance-progress');
+      if (progressBar) {
+        progressBar.classList.remove('paused');
+      }
+      startAutoAdvance();
     }
 
     // Escape HTML to prevent XSS
@@ -509,12 +991,14 @@
     // Navigation functions
     function nextPage() {
       if (currentPageIndex < story.pages.length - 1) {
+        analytics.interactions.push({ type: 'next', timestamp: Date.now() });
         renderPage(currentPageIndex + 1);
       }
     }
 
     function previousPage() {
       if (currentPageIndex > 0) {
+        analytics.interactions.push({ type: 'previous', timestamp: Date.now() });
         renderPage(currentPageIndex - 1);
       }
     }
@@ -523,26 +1007,62 @@
     document.addEventListener('keydown', (e) => {
       if (e.key === 'ArrowRight' || e.key === ' ') {
         e.preventDefault();
+        analytics.interactions.push({ type: 'keyboard_next', key: e.key, timestamp: Date.now() });
         nextPage();
       } else if (e.key === 'ArrowLeft') {
         e.preventDefault();
+        analytics.interactions.push({ type: 'keyboard_previous', key: e.key, timestamp: Date.now() });
         previousPage();
+      } else if (e.key === 'Home') {
+        e.preventDefault();
+        analytics.interactions.push({ type: 'keyboard_home', timestamp: Date.now() });
+        renderPage(0);
+      } else if (e.key === 'End') {
+        e.preventDefault();
+        analytics.interactions.push({ type: 'keyboard_end', timestamp: Date.now() });
+        renderPage(story.pages.length - 1);
       }
     });
+
+    // Pause on hover (desktop) - set up after DOM is ready
+    function setupAutoAdvanceControls() {
+      const viewer = document.getElementById('story-viewer');
+      if (viewer) {
+        viewer.addEventListener('mouseenter', pauseAutoAdvance);
+        viewer.addEventListener('mouseleave', resumeAutoAdvance);
+      }
+    }
 
     // Touch navigation (swipe)
     let touchStartX = 0;
     let touchEndX = 0;
     let touchStartTime = 0;
+    let isSwiping = false;
 
     document.addEventListener('touchstart', (e) => {
       touchStartX = e.changedTouches[0].screenX;
       touchStartTime = Date.now();
+      isSwiping = false;
+      pauseAutoAdvance();
+    }, { passive: true });
+
+    document.addEventListener('touchmove', (e) => {
+      // Detect if user is actually swiping
+      const diff = Math.abs(e.changedTouches[0].screenX - touchStartX);
+      if (diff > 10) {
+        isSwiping = true;
+      }
     }, { passive: true });
 
     document.addEventListener('touchend', (e) => {
       touchEndX = e.changedTouches[0].screenX;
       handleSwipe();
+      // Resume after swipe handling (only if not actively swiping)
+      if (!isSwiping) {
+        setTimeout(resumeAutoAdvance, 300);
+      } else {
+        setTimeout(resumeAutoAdvance, 500);
+      }
     }, { passive: true });
 
     function handleSwipe() {
@@ -570,6 +1090,173 @@
       }
       lastTouchEnd = now;
     }, { passive: false });
+
+    // Handle keyboard navigation in share menu
+    function handleShareKeydown(event, action) {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        action();
+      } else if (event.key === 'Escape') {
+        shareDropdown.classList.remove('open');
+        shareButton.focus();
+      }
+    }
+
+    // Share functionality
+    const shareButton = document.getElementById('share-button');
+    const shareDropdown = document.getElementById('share-dropdown');
+
+    shareButton.addEventListener('click', (e) => {
+      e.stopPropagation();
+      shareDropdown.classList.toggle('open');
+      analytics.interactions.push({ type: 'share_menu_toggle', timestamp: Date.now() });
+    });
+
+    // Keyboard support for share button
+    shareButton.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        shareDropdown.classList.toggle('open');
+      }
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!shareButton.contains(e.target) && !shareDropdown.contains(e.target)) {
+        shareDropdown.classList.remove('open');
+      }
+    });
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3000);
+    }
+
+    function copyStoryLink() {
+      const url = window.location.href;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(() => {
+          showToast('Link copied to clipboard!');
+          shareDropdown.classList.remove('open');
+        }).catch(() => {
+          fallbackCopy(url);
+        });
+      } else {
+        fallbackCopy(url);
+      }
+    }
+
+    function fallbackCopy(text) {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        showToast('Link copied to clipboard!');
+      } catch (err) {
+        showToast('Failed to copy link');
+      }
+      document.body.removeChild(textarea);
+      shareDropdown.classList.remove('open');
+    }
+
+    function shareToTwitter() {
+      const text = story ? `${story.title} - Match Story` : 'Match Story';
+      const url = encodeURIComponent(window.location.href);
+      const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${url}`;
+      window.open(twitterUrl, '_blank', 'width=550,height=420');
+      shareDropdown.classList.remove('open');
+    }
+
+    function shareToFacebook() {
+      const url = encodeURIComponent(window.location.href);
+      const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
+      window.open(facebookUrl, '_blank', 'width=550,height=420');
+      shareDropdown.classList.remove('open');
+    }
+
+    function downloadJSON() {
+      if (!story) return;
+      const jsonStr = JSON.stringify(story, null, 2);
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `story-${story.pack_id || 'match'}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('Story JSON downloaded!');
+      shareDropdown.classList.remove('open');
+    }
+
+    async function exportAsImageSequence() {
+      if (!story) return;
+      showToast('Preparing image export...');
+      
+      // Create a zip-like download of all images
+      // For simplicity, we'll create a download link for each image
+      const imageUrls = story.pages
+        .filter(page => page.image)
+        .map((page, index) => ({
+          url: page.image,
+          filename: `story-page-${index + 1}.jpg`
+        }));
+
+      if (imageUrls.length === 0) {
+        showToast('No images to export');
+        shareDropdown.classList.remove('open');
+        return;
+      }
+
+      // Download images one by one (browser limitation)
+      for (let i = 0; i < imageUrls.length; i++) {
+        const { url, filename } = imageUrls[i];
+        try {
+          const response = await fetch(url);
+          const blob = await response.blob();
+          const downloadUrl = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = downloadUrl;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(downloadUrl);
+          
+          // Small delay between downloads
+          await new Promise(resolve => setTimeout(resolve, 300));
+        } catch (error) {
+          console.error(`Failed to download ${filename}:`, error);
+        }
+      }
+
+      showToast(`Exported ${imageUrls.length} images!`);
+      shareDropdown.classList.remove('open');
+    }
+
+    // Track page unload for analytics
+    window.addEventListener('beforeunload', () => {
+      // Final time tracking
+      if (analytics.currentPageStartTime !== null) {
+        const currentPageId = Object.keys(analytics.pageViews).pop();
+        if (currentPageId) {
+          const timeSpent = Date.now() - analytics.currentPageStartTime;
+          analytics.timeOnPages[currentPageId] = (analytics.timeOnPages[currentPageId] || 0) + timeSpent;
+        }
+      }
+      
+      // In production, send analytics data to server
+      // sendAnalytics(analytics);
+    });
 
     // Initialize
     loadStory();
