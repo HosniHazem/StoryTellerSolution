@@ -1,0 +1,86 @@
+{
+  "matchInfo": {
+    "id": "loss-001",
+    "coverageLevel": "13",
+    "date": "2025-12-01Z",
+    "time": "15:00:00Z",
+    "localDate": "2025-12-01",
+    "localTime": "15:00:00",
+    "week": "15",
+    "numberOfPeriods": 2,
+    "periodLength": 45,
+    "var": "1",
+    "lastUpdated": "2025-12-01T17:00:00Z",
+    "description": "Celtic vs Kilmarnock",
+    "sport": { "id": "soccer", "name": "Soccer" },
+    "ruleset": { "id": "mens", "name": "Men" },
+    "competition": {
+      "id": "spl",
+      "name": "Premiership",
+      "knownName": "Scottish Premiership",
+      "sponsorName": "William Hill Premiership",
+      "competitionCode": "PRE",
+      "competitionFormat": "Domestic league",
+      "country": { "id": "sco", "name": "Scotland" }
+    },
+    "tournamentCalendar": {
+      "id": "2025-26",
+      "startDate": "2025-08-02Z",
+      "endDate": "2026-05-17Z",
+      "name": "2025/2026"
+    },
+    "stage": {
+      "id": "stage-1",
+      "formatId": "format-1",
+      "startDate": "2025-08-02Z",
+      "endDate": "2026-04-11Z",
+      "name": "1st Phase"
+    },
+    "contestant": [
+      {
+        "id": "dvnjvad3p09dugr79gktlrtll",
+        "name": "Celtic",
+        "shortName": "Celtic",
+        "officialName": "Celtic FC",
+        "code": "CEL",
+        "position": "home",
+        "country": { "id": "sco", "name": "Scotland" }
+      },
+      {
+        "id": "enzoyc121va61wtmjf4cm7p3d",
+        "name": "Kilmarnock",
+        "shortName": "Kilmarnock",
+        "officialName": "Kilmarnock FC",
+        "code": "KIL",
+        "position": "away",
+        "country": { "id": "1xf68d0a8lnnq30hnnn8kr6ut", "name": "Scotland" }
+      }
+    ],
+    "venue": {
+      "id": "celtic-park",
+      "neutral": "no",
+      "longName": "Celtic Park",
+      "shortName": "Celtic Park",
+      "latitude": "55.8497",
+      "longitude": "-4.2056"
+    }
+  },
+  "messages": [
+    {
+      "language": "en-gb",
+      "message": [
+        { "id": "1", "comment": "First Half begins.", "timestamp": "2025-12-01T15:00:31Z", "minute": "0", "period": "1", "second": "0", "time": " ", "type": "start", "teamRef1": "dvnjvad3p09dugr79gktlrtll", "teamRef2": "enzoyc121va61wtmjf4cm7p3d" },
+        { "id": "2", "comment": "Goal! Kilmarnock 1, Celtic 0. Lawrence Shankland (Kilmarnock) header from very close range.", "timestamp": "2025-12-01T15:12:10Z", "minute": "11", "period": "1", "second": "30", "time": "12'", "type": "goal", "teamRef1": "enzoyc121va61wtmjf4cm7p3d", "teamRef2": "dvnjvad3p09dugr79gktlrtll" },
+        { "id": "3", "comment": "Penalty Kilmarnock. Foul by Cameron Carter-Vickers (Celtic).", "timestamp": "2025-12-01T15:32:05Z", "minute": "32", "period": "1", "second": "5", "time": "33'", "type": "penalty won", "teamRef1": "enzoyc121va61wtmjf4cm7p3d" },
+        { "id": "4", "comment": "Penalty conceded by Cameron Carter-Vickers (Celtic).", "timestamp": "2025-12-01T15:32:05Z", "minute": "32", "period": "1", "second": "5", "time": "33'", "type": "penalty lost", "teamRef1": "dvnjvad3p09dugr79gktlrtll" },
+        { "id": "5", "comment": "Goal! Kilmarnock 2, Celtic 0. Penalty scored by Lawrence Shankland.", "timestamp": "2025-12-01T15:33:00Z", "minute": "33", "period": "1", "second": "0", "time": "33'", "type": "penalty goal", "teamRef1": "enzoyc121va61wtmjf4cm7p3d", "teamRef2": "dvnjvad3p09dugr79gktlrtll" },
+        { "id": "6", "comment": "First Half ends, Celtic 0, Kilmarnock 2.", "timestamp": "2025-12-01T15:47:30Z", "minute": "45", "period": "1", "second": "0", "time": "45'", "type": "end 1", "teamRef1": "enzoyc121va61wtmjf4cm7p3d", "teamRef2": "dvnjvad3p09dugr79gktlrtll" },
+        { "id": "7", "comment": "Second Half begins Celtic 0, Kilmarnock 2.", "timestamp": "2025-12-01T16:02:00Z", "minute": "45", "period": "2", "second": "0", "time": " ", "type": "start", "teamRef1": "dvnjvad3p09dugr79gktlrtll", "teamRef2": "enzoyc121va61wtmjf4cm7p3d" },
+        { "id": "8", "comment": "Goal! Celtic 1, Kilmarnock 2. Kyogo Furuhashi (Celtic) right footed shot from the centre of the box.", "timestamp": "2025-12-01T16:15:30Z", "minute": "58", "period": "2", "second": "0", "time": "58'", "type": "goal", "teamRef1": "dvnjvad3p09dugr79gktlrtll", "teamRef2": "enzoyc121va61wtmjf4cm7p3d" },
+        { "id": "9", "comment": "Goal! Kilmarnock 3, Celtic 1. Barrie McKay (Kilmarnock) left footed shot from outside the box to the bottom corner.", "timestamp": "2025-12-01T16:35:10Z", "minute": "78", "period": "2", "second": "0", "time": "78'", "type": "goal", "teamRef1": "enzoyc121va61wtmjf4cm7p3d", "teamRef2": "dvnjvad3p09dugr79gktlrtll" },
+        { "id": "10", "comment": "Second Half ends, Celtic 1, Kilmarnock 3.", "timestamp": "2025-12-01T16:50:10Z", "minute": "90", "period": "2", "second": "0", "time": "90'", "type": "end 2", "teamRef1": "enzoyc121va61wtmjf4cm7p3d", "teamRef2": "dvnjvad3p09dugr79gktlrtll" }
+      ]
+    }
+  ]
+}
+

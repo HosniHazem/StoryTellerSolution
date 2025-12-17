@@ -2,7 +2,7 @@
   "pack_id": "6lqto88nzncqhvtv45a0rmcyc",
   "title": "Celtic vs Kilmarnock",
   "source": "match_events",
-  "created_at": "2025-12-17T08:13:43.790Z",
+  "created_at": "2025-12-17T13:25:12.011Z",
   "metrics": {
     "total_events": 102,
     "total_goals": 4,
@@ -13,46 +13,69 @@
   "pages": [
     {
       "type": "cover",
-      "headline": "Celtic 4-0 Kilmarnock",
-      "subheadline": "Scottish Premiership • 9 November 2025",
+      "headline": "Celtic vs Kilmarnock",
+      "subheadline": "Scottish Premiership • Celtic Park • 9 November 2025",
       "image": "../assets/21521989.jpg"
+    },
+    {
+      "type": "highlight",
+      "minute": 8,
+      "headline": "🚨 Off the Post!",
+      "caption": "We go close to scoring",
+      "image": "../assets/21522414.jpg",
+      "explanation": "Johnny Kenny (Celtic) hits the left post with a right footed shot from the left side of the box. Assisted by Luke McCowan."
     },
     {
       "type": "highlight",
       "minute": 9,
       "headline": "⚽ GOAL!",
-      "caption": "Celtic scores",
-      "image": "../assets/21522003.jpg",
+      "caption": "We extend our advantage.",
+      "image": "../assets/21522413.jpg",
       "explanation": "Goal! Celtic 1, Kilmarnock 0. Johnny Kenny (Celtic) left footed shot from very close range to the bottom left corner. Assisted by Reo Hatate."
+    },
+    {
+      "type": "info",
+      "headline": "Half-time whistle",
+      "body": "Score at the break: Celtic 1-0 Kilmarnock.\n\nWe take a lead into the interval after a strong first half.",
+      "image": "../assets/21522057.jpg"
     },
     {
       "type": "highlight",
       "minute": 50,
       "headline": "⚽ GOAL!",
-      "caption": "Celtic scores",
+      "caption": "We extend our advantage.",
       "image": "../assets/21521990.jpg",
       "explanation": "Goal! Celtic 2, Kilmarnock 0. Kieran Tierney (Celtic) left footed shot from outside the box to the bottom right corner. Assisted by Liam Scales."
     },
     {
       "type": "highlight",
       "minute": 84,
-      "headline": "⚽ GOAL!",
-      "caption": "Celtic scores",
-      "image": "../assets/21521989.jpg",
+      "headline": "⚽ Turning the screw!",
+      "caption": "We tighten their grip on the match with another goal.",
+      "image": "../assets/21522345.jpg",
       "explanation": "Goal! Celtic 3, Kilmarnock 0. Daizen Maeda (Celtic) right footed shot from the right side of the box to the bottom right corner. Assisted by Arne Engels with a through ball."
     },
     {
       "type": "highlight",
+      "minute": 91,
+      "headline": "Penalty awarded!",
+      "caption": "We earn a golden chance from the spot.",
+      "image": "../assets/21522003.jpg",
+      "explanation": "Penalty Celtic. Yang Hyun-Jun draws a foul in the penalty area. Penalty conceded by James Brown (Kilmarnock) after a foul in the penalty area."
+    },
+    {
+      "type": "highlight",
       "minute": 92,
-      "headline": "⚽ Penalty Goal!",
-      "caption": "Celtic scores from the penalty spot",
+      "headline": "⚽ Breakthrough from the spot!",
+      "caption": "We open the scoring and set the tone of the match.",
       "image": "../assets/21522014.jpg",
       "explanation": "Goal! Celtic 4, Kilmarnock 0. Arne Engels (Celtic) converts the penalty with a right footed shot to the bottom left corner."
     },
     {
       "type": "info",
-      "headline": "Celtic Wins! 🏆",
-      "body": "Full Time: Celtic 4-0 Kilmarnock\n\nVenue: Celtic Park\nCompetition: Scottish Premiership\n\nCeltic takes all three points with a dominant performance."
+      "headline": "We Won! 🏆",
+      "body": "Full Time: Celtic 4-0 Kilmarnock\n\nVenue: Celtic Park\nCompetition: Scottish Premiership\n\nWe take all three points with a dominant performance.",
+      "image": "../assets/21522058.jpg"
     }
   ]
 }

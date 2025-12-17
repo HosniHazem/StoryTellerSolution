@@ -1,0 +1,84 @@
+{
+  "matchInfo": {
+    "id": "draw-001",
+    "coverageLevel": "13",
+    "date": "2025-12-05Z",
+    "time": "19:45:00Z",
+    "localDate": "2025-12-05",
+    "localTime": "19:45:00",
+    "week": "16",
+    "numberOfPeriods": 2,
+    "periodLength": 45,
+    "var": "1",
+    "lastUpdated": "2025-12-05T22:00:00Z",
+    "description": "Celtic vs Aberdeen",
+    "sport": { "id": "soccer", "name": "Soccer" },
+    "ruleset": { "id": "mens", "name": "Men" },
+    "competition": {
+      "id": "spl",
+      "name": "Premiership",
+      "knownName": "Scottish Premiership",
+      "sponsorName": "William Hill Premiership",
+      "competitionCode": "PRE",
+      "competitionFormat": "Domestic league",
+      "country": { "id": "sco", "name": "Scotland" }
+    },
+    "tournamentCalendar": {
+      "id": "2025-26",
+      "startDate": "2025-08-02Z",
+      "endDate": "2026-05-17Z",
+      "name": "2025/2026"
+    },
+    "stage": {
+      "id": "stage-1",
+      "formatId": "format-1",
+      "startDate": "2025-08-02Z",
+      "endDate": "2026-04-11Z",
+      "name": "1st Phase"
+    },
+    "contestant": [
+      {
+        "id": "dvnjvad3p09dugr79gktlrtll",
+        "name": "Celtic",
+        "shortName": "Celtic",
+        "officialName": "Celtic FC",
+        "code": "CEL",
+        "position": "home",
+        "country": { "id": "sco", "name": "Scotland" }
+      },
+      {
+        "id": "aberdeen-id",
+        "name": "Aberdeen",
+        "shortName": "Aberdeen",
+        "officialName": "Aberdeen FC",
+        "code": "ABE",
+        "position": "away",
+        "country": { "id": "sco", "name": "Scotland" }
+      }
+    ],
+    "venue": {
+      "id": "celtic-park",
+      "neutral": "no",
+      "longName": "Celtic Park",
+      "shortName": "Celtic Park",
+      "latitude": "55.8497",
+      "longitude": "-4.2056"
+    }
+  },
+  "messages": [
+    {
+      "language": "en-gb",
+      "message": [
+        { "id": "1", "comment": "First Half begins.", "timestamp": "2025-12-05T19:45:31Z", "minute": "0", "period": "1", "second": "0", "time": " ", "type": "start", "teamRef1": "dvnjvad3p09dugr79gktlrtll", "teamRef2": "aberdeen-id" },
+        { "id": "2", "comment": "Goal! Celtic 1, Aberdeen 0. Daizen Maeda (Celtic) right footed shot from the centre of the box.", "timestamp": "2025-12-05T19:55:10Z", "minute": "10", "period": "1", "second": "30", "time": "11'", "type": "goal", "teamRef1": "dvnjvad3p09dugr79gktlrtll", "teamRef2": "aberdeen-id" },
+        { "id": "3", "comment": "Goal! Celtic 1, Aberdeen 1. Bojan Miovski (Aberdeen) header from the centre of the box.", "timestamp": "2025-12-05T20:20:00Z", "minute": "35", "period": "1", "second": "0", "time": "35'", "type": "goal", "teamRef1": "aberdeen-id", "teamRef2": "dvnjvad3p09dugr79gktlrtll" },
+        { "id": "4", "comment": "First Half ends, Celtic 1, Aberdeen 1.", "timestamp": "2025-12-05T20:30:00Z", "minute": "45", "period": "1", "second": "0", "time": "45'", "type": "end 1", "teamRef1": "aberdeen-id", "teamRef2": "dvnjvad3p09dugr79gktlrtll" },
+        { "id": "5", "comment": "Second Half begins Celtic 1, Aberdeen 1.", "timestamp": "2025-12-05T20:45:00Z", "minute": "45", "period": "2", "second": "0", "time": " ", "type": "start", "teamRef1": "dvnjvad3p09dugr79gktlrtll", "teamRef2": "aberdeen-id" },
+        { "id": "6", "comment": "Goal! Celtic 1, Aberdeen 2. Duk (Aberdeen) left footed shot from outside the box.", "timestamp": "2025-12-05T21:00:00Z", "minute": "60", "period": "2", "second": "0", "time": "60'", "type": "goal", "teamRef1": "aberdeen-id", "teamRef2": "dvnjvad3p09dugr79gktlrtll" },
+        { "id": "7", "comment": "Goal! Celtic 2, Aberdeen 2. Kyogo Furuhashi (Celtic) right footed shot from the centre of the box.", "timestamp": "2025-12-05T21:15:00Z", "minute": "75", "period": "2", "second": "0", "time": "75'", "type": "goal", "teamRef1": "dvnjvad3p09dugr79gktlrtll", "teamRef2": "aberdeen-id" },
+        { "id": "8", "comment": "Second Half ends, Celtic 2, Aberdeen 2.", "timestamp": "2025-12-05T21:35:00Z", "minute": "90", "period": "2", "second": "0", "time": "90'", "type": "end 2", "teamRef1": "aberdeen-id", "teamRef2": "dvnjvad3p09dugr79gktlrtll" }
+      ]
+    }
+  ]
+}
+
