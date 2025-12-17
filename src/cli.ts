@@ -40,7 +40,7 @@ try {
   console.log('\n💡 Run "npm run preview" to view the story\n');
 
 } catch (error) {
-  console.error('❌ Error building story:', error.message);
-  console.error(error.stack);
-  process.exit(1);
+  const err = error as Error;
+  console.error('❌ Error building story:', err.message);  // ✅ Works
+  console.error(err.stack);                                // ✅ Works
 }

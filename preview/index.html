@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Story Preview</title>
   <style>
     * {
@@ -11,38 +11,71 @@
       box-sizing: border-box;
     }
 
+    html, body {
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+      position: fixed;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
       background: #000;
       color: #fff;
-      overflow: hidden;
-      height: 100vh;
     }
 
-    /* Story Container */
+    /* Story Container - Fits all screens */
     .story-container {
-      position: relative;
+      position: fixed;
+      top: 0;
+      left: 0;
       width: 100%;
-      height: 100vh;
+      height: 100%;
       display: flex;
       align-items: center;
       justify-content: center;
       background: #000;
     }
 
-    /* Story Page */
+    /* Story Page - Responsive to all screen sizes */
     .story-page {
       position: relative;
       width: 100%;
-      max-width: 450px;
-      height: 800px;
+      height: 100%;
+      max-width: 100vw;
+      max-height: 100vh;
       background: #1a1a1a;
-      border-radius: 12px;
       overflow: hidden;
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
     }
 
-    /* Page Background Image */
+    /* Desktop: max width constraint */
+    @media (min-width: 768px) {
+      .story-page {
+        max-width: 450px;
+        max-height: min(800px, 90vh);
+        border-radius: 12px;
+      }
+    }
+
+    /* Tablet landscape: wider but constrained */
+    @media (min-width: 768px) and (max-width: 1024px) and (orientation: landscape) {
+      .story-page {
+        max-width: 600px;
+        max-height: 85vh;
+      }
+    }
+
+    /* Small phones: full screen, no border radius */
+    @media (max-width: 374px) {
+      .story-page {
+        border-radius: 0;
+      }
+    }
+
+    /* Page Background Image - Cover entire area */
     .page-background {
       position: absolute;
       top: 0;
@@ -50,6 +83,7 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
+      object-position: center;
       z-index: 0;
     }
 
@@ -63,7 +97,7 @@
       z-index: 1;
     }
 
-    /* Page Content */
+    /* Page Content - Safe area for all screens */
     .page-content {
       position: relative;
       z-index: 2;
@@ -71,7 +105,17 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      padding: 40px 30px;
+      padding: max(20px, env(safe-area-inset-top, 20px)) 
+               max(20px, env(safe-area-inset-right, 20px))
+               max(20px, env(safe-area-inset-bottom, 20px))
+               max(20px, env(safe-area-inset-left, 20px));
+    }
+
+    /* Desktop: more padding */
+    @media (min-width: 768px) {
+      .page-content {
+        padding: 40px 30px;
+      }
     }
 
     /* Header */
@@ -79,6 +123,8 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
     }
 
     .minute-badge {
@@ -86,8 +132,9 @@
       color: #000;
       padding: 6px 12px;
       border-radius: 20px;
-      font-size: 14px;
+      font-size: clamp(12px, 3vw, 14px);
       font-weight: 700;
+      white-space: nowrap;
     }
 
     .page-counter {
@@ -95,83 +142,110 @@
       color: #fff;
       padding: 6px 12px;
       border-radius: 20px;
-      font-size: 13px;
+      font-size: clamp(11px, 2.5vw, 13px);
       font-weight: 600;
+      white-space: nowrap;
     }
 
-    /* Main Content */
+    /* Main Content - Responsive typography */
     .page-main {
       flex: 1;
       display: flex;
       flex-direction: column;
       justify-content: center;
       text-align: center;
+      padding: 20px 0;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
     }
 
     .headline {
-      font-size: 48px;
+      font-size: clamp(32px, 8vw, 48px);
       font-weight: 800;
       line-height: 1.1;
       margin-bottom: 16px;
       text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+      word-wrap: break-word;
+      hyphens: auto;
     }
 
     .subheadline {
-      font-size: 18px;
+      font-size: clamp(14px, 3.5vw, 18px);
       font-weight: 500;
       opacity: 0.9;
       margin-bottom: 8px;
       text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+      word-wrap: break-word;
     }
 
     .caption {
-      font-size: 24px;
+      font-size: clamp(18px, 4.5vw, 24px);
       font-weight: 600;
       margin-bottom: 16px;
       text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+      word-wrap: break-word;
     }
 
     .explanation {
-      font-size: 16px;
+      font-size: clamp(14px, 3.5vw, 16px);
       line-height: 1.5;
       opacity: 0.85;
       max-width: 90%;
       margin: 0 auto;
       text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+      word-wrap: break-word;
     }
 
     .body-text {
-      font-size: 16px;
+      font-size: clamp(14px, 3.5vw, 16px);
       line-height: 1.6;
       opacity: 0.9;
       text-align: left;
       white-space: pre-line;
+      word-wrap: break-word;
     }
 
-    /* Navigation */
+    /* Navigation - Touch-friendly */
     .navigation {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 20px;
+      gap: 15px;
+      flex-shrink: 0;
+      padding-top: 10px;
+    }
+
+    /* Small screens: smaller gaps */
+    @media (max-width: 374px) {
+      .navigation {
+        gap: 10px;
+      }
     }
 
     .nav-button {
       background: rgba(255, 255, 255, 0.2);
       border: none;
       color: #fff;
-      padding: 14px 28px;
+      padding: clamp(10px, 3vw, 14px) clamp(20px, 5vw, 28px);
       border-radius: 30px;
-      font-size: 15px;
+      font-size: clamp(13px, 3.2vw, 15px);
       font-weight: 600;
       cursor: pointer;
       transition: all 0.2s ease;
       backdrop-filter: blur(10px);
+      white-space: nowrap;
+      min-width: 80px;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
     }
 
     .nav-button:hover:not(:disabled) {
       background: rgba(255, 255, 255, 0.3);
       transform: scale(1.05);
+    }
+
+    .nav-button:active:not(:disabled) {
+      transform: scale(0.98);
     }
 
     .nav-button:disabled {
@@ -185,33 +259,30 @@
       background: rgba(255, 255, 255, 0.2);
       border-radius: 2px;
       overflow: hidden;
+      min-width: 50px;
     }
 
     .progress-fill {
       height: 100%;
       background: #fff;
       transition: width 0.3s ease;
+      will-change: width;
     }
 
     /* Loading & Error States */
     .loading, .error {
       text-align: center;
-      padding: 40px;
-    }
-
-    .loading {
-      font-size: 18px;
-      opacity: 0.7;
+      padding: 40px 20px;
+      font-size: clamp(14px, 4vw, 18px);
     }
 
     .error {
       color: #ff4444;
-      font-size: 16px;
     }
 
     /* Page Types Specific Styles */
     .page-type-cover .headline {
-      font-size: 56px;
+      font-size: clamp(40px, 10vw, 56px);
     }
 
     .page-type-info .page-main {
@@ -219,16 +290,7 @@
       text-align: left;
     }
 
-    /* Responsive */
-    @media (max-width: 500px) {
-      .story-page {
-        max-width: 100%;
-        height: 100vh;
-        border-radius: 0;
-      }
-    }
-
-    /* Keyboard shortcuts hint */
+    /* Keyboard shortcuts hint - Hide on small screens */
     .shortcuts {
       position: fixed;
       bottom: 20px;
@@ -240,6 +302,66 @@
       font-size: 12px;
       opacity: 0.6;
       z-index: 10;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 767px) {
+      .shortcuts {
+        display: none;
+      }
+    }
+
+    /* Prevent text selection on touch devices */
+    @media (hover: none) {
+      * {
+        -webkit-user-select: none;
+        user-select: none;
+      }
+      
+      .body-text, .explanation {
+        -webkit-user-select: text;
+        user-select: text;
+      }
+    }
+
+    /* Landscape orientation on phones: adjust layout */
+    @media (max-height: 500px) and (orientation: landscape) {
+      .page-content {
+        padding: 15px 20px;
+      }
+      
+      .page-main {
+        padding: 10px 0;
+      }
+      
+      .headline {
+        font-size: clamp(24px, 6vw, 32px);
+        margin-bottom: 10px;
+      }
+      
+      .navigation {
+        padding-top: 5px;
+      }
+    }
+
+    /* High contrast mode support */
+    @media (prefers-contrast: high) {
+      .nav-button {
+        border: 2px solid rgba(255, 255, 255, 0.5);
+      }
+      
+      .minute-badge, .page-counter {
+        border: 2px solid currentColor;
+      }
+    }
+
+    /* Reduced motion support */
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
     }
   </style>
 </head>
@@ -310,22 +432,22 @@
       html += `<div class="page-main">`;
       
       if (page.type === 'cover') {
-        html += `<h1 class="headline">${page.headline}</h1>`;
+        html += `<h1 class="headline">${escapeHtml(page.headline)}</h1>`;
         if (page.subheadline) {
-          html += `<p class="subheadline">${page.subheadline}</p>`;
+          html += `<p class="subheadline">${escapeHtml(page.subheadline)}</p>`;
         }
       } else if (page.type === 'highlight') {
-        html += `<h1 class="headline">${page.headline}</h1>`;
+        html += `<h1 class="headline">${escapeHtml(page.headline)}</h1>`;
         if (page.caption) {
-          html += `<p class="caption">${page.caption}</p>`;
+          html += `<p class="caption">${escapeHtml(page.caption)}</p>`;
         }
         if (page.explanation) {
-          html += `<p class="explanation">${page.explanation}</p>`;
+          html += `<p class="explanation">${escapeHtml(page.explanation)}</p>`;
         }
       } else if (page.type === 'info') {
-        html += `<h2 class="headline">${page.headline}</h2>`;
+        html += `<h2 class="headline">${escapeHtml(page.headline)}</h2>`;
         if (page.body) {
-          html += `<p class="body-text">${page.body}</p>`;
+          html += `<p class="body-text">${escapeHtml(page.body)}</p>`;
         }
       }
 
@@ -350,6 +472,13 @@
 
       viewer.innerHTML = html;
       viewer.className = `story-page page-type-${page.type}`;
+    }
+
+    // Escape HTML to prevent XSS
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
     }
 
     // Navigation functions
@@ -379,21 +508,26 @@
     // Touch navigation (swipe)
     let touchStartX = 0;
     let touchEndX = 0;
+    let touchStartTime = 0;
 
     document.addEventListener('touchstart', (e) => {
       touchStartX = e.changedTouches[0].screenX;
-    });
+      touchStartTime = Date.now();
+    }, { passive: true });
 
     document.addEventListener('touchend', (e) => {
       touchEndX = e.changedTouches[0].screenX;
       handleSwipe();
-    });
+    }, { passive: true });
 
     function handleSwipe() {
       const swipeThreshold = 50;
+      const timeThreshold = 500; // Max time for swipe
       const diff = touchStartX - touchEndX;
+      const timeDiff = Date.now() - touchStartTime;
 
-      if (Math.abs(diff) > swipeThreshold) {
+      // Only register as swipe if fast enough
+      if (timeDiff < timeThreshold && Math.abs(diff) > swipeThreshold) {
         if (diff > 0) {
           nextPage();
         } else {
@@ -402,8 +536,37 @@
       }
     }
 
+    // Prevent double-tap zoom on iOS
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', (e) => {
+      const now = Date.now();
+      if (now - lastTouchEnd <= 300) {
+        e.preventDefault();
+      }
+      lastTouchEnd = now;
+    }, { passive: false });
+
     // Initialize
     loadStory();
+
+    // Handle orientation changes
+    window.addEventListener('orientationchange', () => {
+      // Re-render current page to adjust layout
+      if (story) {
+        setTimeout(() => renderPage(currentPageIndex), 100);
+      }
+    });
+
+    // Handle window resize (for desktop)
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        if (story) {
+          renderPage(currentPageIndex);
+        }
+      }, 250);
+    });
   </script>
 </body>
 </html>

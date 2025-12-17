@@ -1,6 +1,16 @@
 import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import type {
+  EventsData,
+  MatchEvent,
+  Story,
+  StoryMetrics,
+  CoverPage,
+  HighlightPage,
+  InfoPage,
+  StoryPage
+} from './types.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -16,8 +26,13 @@ const __dirname = dirname(__filename);
  */
 
 export class StoryBuilder {
-  constructor(eventsPath, assetsPath) {
-    this.eventsData = JSON.parse(readFileSync(eventsPath, 'utf-8'));
+  private eventsData: EventsData;
+  private events: MatchEvent[];
+  private matchInfo: EventsData['matchInfo'];
+  private assetsPath: string;
+
+  constructor(eventsPath: string, assetsPath: string) {
+    this.eventsData = JSON.parse(readFileSync(eventsPath, 'utf-8')) as EventsData;
     this.assetsPath = assetsPath;
     this.events = this.eventsData.messages[0].message;
     this.matchInfo = this.eventsData.matchInfo;
@@ -26,8 +41,8 @@ export class StoryBuilder {
   /**
    * Main build method - orchestrates story creation
    */
-  build() {
-    const story = {
+  build(): Story {
+    const story: Story = {
       pack_id: this.matchInfo.id,
       title: this.matchInfo.description,
       source: 'match_events',
@@ -42,7 +57,7 @@ export class StoryBuilder {
   /**
    * Build story metrics for analytics
    */
-  buildMetrics() {
+  private buildMetrics(): StoryMetrics {
     const goals = this.events.filter(e => e.type === 'goal' || e.type === 'penalty goal');
     const homeTeam = this.matchInfo.contestant[0].name;
     const awayTeam = this.matchInfo.contestant[1].name;
@@ -62,8 +77,8 @@ export class StoryBuilder {
   /**
    * Build all pages in the story
    */
-  buildPages() {
-    const pages = [];
+  private buildPages(): StoryPage[] {
+    const pages: StoryPage[] = [];
 
     // 1. Cover page
     pages.push(this.buildCoverPage());
@@ -80,7 +95,7 @@ export class StoryBuilder {
   /**
    * Create cover page with match info
    */
-  buildCoverPage() {
+  private buildCoverPage(): CoverPage {
     const homeTeam = this.matchInfo.contestant[0].name;
     const awayTeam = this.matchInfo.contestant[1].name;
     const goals = this.events.filter(e => e.type === 'goal' || e.type === 'penalty goal');
@@ -98,8 +113,8 @@ export class StoryBuilder {
   /**
    * Create highlight pages for goals, cards, and key moments
    */
-  buildHighlightPages() {
-    const highlights = [];
+  private buildHighlightPages(): HighlightPage[] {
+    const highlights: HighlightPage[] = [];
     
     // Extract key events
     const goals = this.events.filter(e => e.type === 'goal');
@@ -149,7 +164,7 @@ export class StoryBuilder {
   /**
    * Create final summary/info page
    */
-  buildSummaryPage() {
+  private buildSummaryPage(): InfoPage {
     const goals = this.events.filter(e => e.type === 'goal' || e.type === 'penalty goal');
     const homeTeam = this.matchInfo.contestant[0].name;
     const awayTeam = this.matchInfo.contestant[1].name;
@@ -180,7 +195,7 @@ export class StoryBuilder {
   /**
    * Helper: Get team name from team reference ID
    */
-  getTeamName(teamRef) {
+  private getTeamName(teamRef: string): string {
     const team = this.matchInfo.contestant.find(c => c.id === teamRef);
     return team ? team.name : 'Unknown';
   }
@@ -188,7 +203,7 @@ export class StoryBuilder {
   /**
    * Helper: Map events to available images
    */
-  getImageForEvent(event, index) {
+  private getImageForEvent(event: MatchEvent, index: number): string {
     // Available images based on assets folder
     const images = [
       '21521989.jpg', '21521990.jpg', '21522003.jpg', '21522014.jpg',
@@ -205,14 +220,14 @@ export class StoryBuilder {
   /**
    * Helper: Get asset path (relative for JSON, works in preview)
    */
-  getAssetPath(filename) {
+  private getAssetPath(filename: string): string {
     return `../assets/${filename}`;
   }
 
   /**
    * Helper: Clean up comment text
    */
-  cleanComment(comment) {
+  private cleanComment(comment: string): string {
     return comment
       .replace(/\s+/g, ' ')
       .trim();
@@ -221,7 +236,7 @@ export class StoryBuilder {
   /**
    * Helper: Format date nicely
    */
-  formatDate(dateStr) {
+  private formatDate(dateStr: string): string {
     const date = new Date(dateStr);
     return date.toLocaleDateString('en-GB', { 
       day: 'numeric', 

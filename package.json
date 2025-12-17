@@ -1,29 +1,38 @@
 {
   "name": "storyteller-match-story-builder",
   "version": "1.0.0",
-  "description": "Build Stories from match events - CLI tool and preview viewer",
+  "description": "Build Stories from match events - CLI tool and preview viewer (TypeScript)",
   "type": "module",
-  "main": "src/index.js",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "bin": {
-    "build-story": "./src/cli.js"
+    "build-story": "./dist/cli.js"
   },
   "scripts": {
-    "build": "node src/cli.js",
-    "preview": "node src/server.js",
+    "build": "npm run build:ts && node dist/cli.js",
+    "build:ts": "tsc",
+    "build:story": "node dist/cli.js",
+    "preview": "npm run build:ts && node dist/server.js",
     "dev": "npm run build && npm run preview",
     "test": "node --test tests/**/*.test.js",
-    "validate": "node src/validate.js"
+    "validate": "npm run build:ts && node dist/validate.js",
+    "clean": "rm -rf dist"
   },
   "keywords": [
     "storyteller",
     "sports",
     "highlights",
-    "stories"
+    "stories",
+    "typescript"
   ],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "ajv": "^8.12.0",
     "ajv-formats": "^3.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.3"
   }
 }

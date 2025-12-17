@@ -16,7 +16,7 @@ const __dirname = dirname(__filename);
 const PORT = 3000;
 const projectRoot = join(__dirname, '..');
 
-const MIME_TYPES = {
+const MIME_TYPES: Record<string, string> = {
   '.html': 'text/html',
   '.css': 'text/css',
   '.js': 'application/javascript',
@@ -29,8 +29,13 @@ const MIME_TYPES = {
 
 const server = createServer((req, res) => {
   // Default to index.html
-  let filePath = req.url === '/' ? '/preview/index.html' : req.url;
-  filePath = join(projectRoot, filePath);
+let filePath = req.url === '/' ? '/preview/index.html' : req.url;
+if (!filePath) {
+  res.writeHead(400);
+  res.end('Bad Request');
+  return;
+}
+filePath = join(projectRoot, filePath);
 
   // Security: prevent directory traversal
   if (!filePath.startsWith(projectRoot)) {

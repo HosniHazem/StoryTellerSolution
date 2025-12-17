@@ -1,4 +1,29 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# TypeScript
+dist/
+*.tsbuildinfo
+
+# Output (optional - could be committed)
+# out/story.json
+
+# OS files
 .DS_Store
-node_modules
-dist
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment
 .env
+.env.local

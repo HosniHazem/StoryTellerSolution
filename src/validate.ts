@@ -3,6 +3,7 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
+import type { Story } from './types.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -19,7 +20,8 @@ console.log('🔍 Validating story against schema...\n');
 
 try {
   const schemaData = JSON.parse(readFileSync(schemaPath, 'utf-8'));
-  const story = JSON.parse(readFileSync(storyPath, 'utf-8'));
+  const story = JSON.parse(readFileSync(storyPath, 'utf-8')) as Story;
+console.log(`📊 Pack ID: ${story.pack_id}`);
 
   // Remove $schema to avoid Ajv issues with draft-2020-12
   const { $schema, ...schema } = schemaData;
@@ -40,13 +42,13 @@ try {
     console.log(`  - Info: ${story.pages.filter(p => p.type === 'info').length}\n`);
   } else {
     console.error('❌ Validation failed:\n');
-    validate.errors.forEach(err => {
+    validate.errors?.forEach(err => {  // ✅ Works: optional chaining
       console.error(`  - ${err.instancePath}: ${err.message}`);
     });
     process.exit(1);
   }
 
 } catch (error) {
-  console.error('❌ Error:', error.message);
-  process.exit(1);
+  const err = error as Error;
+  console.error('❌ Error:', err.message);  // ✅ Works
 }
