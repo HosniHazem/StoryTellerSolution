@@ -27,7 +27,7 @@ jobs:
         run: npm run build:ts
 
       - name: Tests
-        run: npm test
+        run: npm run test
 
       - name: Validate story output
         run: npm run validate
