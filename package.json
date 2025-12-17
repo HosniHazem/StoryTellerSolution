@@ -14,8 +14,9 @@
     "build:story": "node dist/cli.js",
     "preview": "npm run build:ts && node dist/server.js",
     "dev": "npm run build && npm run preview",
-    "test": "node --test tests/**/*.test.js",
+    "test": "npm run build:ts && node --test tests/**/*.test.js",
     "validate": "npm run build:ts && node dist/validate.js",
+    "editor": "npm run build:ts && node dist/server.js --editor",
     "clean": "rm -rf dist"
   },
   "keywords": [
