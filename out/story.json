@@ -2,7 +2,7 @@
   "pack_id": "6lqto88nzncqhvtv45a0rmcyc",
   "title": "Celtic vs Kilmarnock",
   "source": "match_events",
-  "created_at": "2025-12-17T13:25:12.011Z",
+  "created_at": "2025-12-17T14:07:28.510Z",
   "metrics": {
     "total_events": 102,
     "total_goals": 4,
@@ -32,6 +32,14 @@
       "caption": "We extend our advantage.",
       "image": "../assets/21522413.jpg",
       "explanation": "Goal! Celtic 1, Kilmarnock 0. Johnny Kenny (Celtic) left footed shot from very close range to the bottom left corner. Assisted by Reo Hatate."
+    },
+    {
+      "type": "highlight",
+      "minute": 28,
+      "headline": "🚨 Off the Post!",
+      "caption": "Kilmarnock threaten the goal",
+      "image": "../assets/21522412.jpg",
+      "explanation": "Bruce Anderson (Kilmarnock) hits the left post with a left footed shot from the left side of the six yard box. Assisted by Eddie Beach following a set piece situation."
     },
     {
       "type": "info",
