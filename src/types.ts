@@ -70,6 +70,7 @@ export interface InfoPage {
   type: 'info';
   headline: string;
   body: string;
+  image?: string;
 }
 
 export type StoryPage = CoverPage | HighlightPage | InfoPage;
@@ -82,3 +83,45 @@ export interface Story {
   metrics: StoryMetrics;
   pages: StoryPage[];
 }
+
+export type StoryPerspective = 'home' | 'away' | 'neutral' | 'team';
+
+export interface StoryConfig {
+  /**
+   * Which team's perspective the story is told from.
+   * - "home": focus slightly more on the home team
+   * - "away": focus slightly more on the away team
+   * - "neutral": treat both teams equally
+   * - "team": use an explicit teamId
+   */
+  perspective: StoryPerspective;
+
+  /**
+   * Optional explicit teamId for "team" perspective.
+   * Should match one of matchInfo.contestant[i].id when used.
+   */
+  teamId?: string | null;
+
+  /**
+   * Maximum number of highlight pages (excluding cover + info).
+   * Used to keep stories concise and engaging.
+   */
+  maxHighlightPages: number;
+
+  /**
+   * Whether to include big chances for the opponent of the posting team.
+   */
+  includeOpponentBigChances: boolean;
+
+  /**
+   * Whether to include card events as highlights.
+   */
+  includeCards: boolean;
+
+  /**
+   * Only yellow cards before this minute are considered highlight-worthy
+   * (red cards are always included when includeCards is true).
+   */
+  cardMinuteCutoff: number;
+}
+

@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/x-icon" href="/assets/getstoryteller_logo.ico">
+  <title>Story Editor</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 16px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #0d1117;
+      color: #e6edf3;
+    }
+    h1 { margin: 0 0 12px; }
+    .toolbar {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    button {
+      border: none;
+      padding: 8px 12px;
+      border-radius: 6px;
+      background: #238636;
+      color: #fff;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    button.secondary { background: #30363d; color: #e6edf3; }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 12px;
+    }
+    .card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    label {
+      font-size: 12px;
+      color: #8b949e;
+    }
+    input, textarea, select {
+      width: 100%;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      color: #e6edf3;
+      border-radius: 6px;
+      padding: 8px;
+      font-size: 14px;
+    }
+    textarea { min-height: 80px; resize: vertical; }
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 12px;
+      background: #30363d;
+      font-size: 12px;
+      color: #e6edf3;
+    }
+    .actions {
+      display: flex;
+      gap: 8px;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .status {
+      font-size: 13px;
+      color: #8b949e;
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <h1 style="flex:1;">Story Editor</h1>
+    <button id="refresh">Refresh</button>
+    <button id="save" class="secondary">Save</button>
+    <span class="status" id="status">Idle</span>
+  </div>
+
+  <div class="grid" id="pages"></div>
+
+  <script>
+    let story = null;
+
+    const statusEl = document.getElementById('status');
+    const pagesEl = document.getElementById('pages');
+    const saveBtn = document.getElementById('save');
+    const refreshBtn = document.getElementById('refresh');
+
+    refreshBtn.onclick = loadStory;
+    saveBtn.onclick = saveStory;
+
+    async function loadStory() {
+      setStatus('Loading...');
+      saveBtn.disabled = true;
+      try {
+        const res = await fetch('/out/story.json');
+        if (!res.ok) throw new Error('Failed to load story');
+        story = await res.json();
+        renderPages();
+        setStatus('Loaded');
+      } catch (e) {
+        setStatus(`Error: ${e.message}`);
+      } finally {
+        saveBtn.disabled = false;
+      }
+    }
+
+    function renderPages() {
+      pagesEl.innerHTML = '';
+      story.pages.forEach((page, idx) => {
+        const card = document.createElement('div');
+        card.className = 'card';
+
+        const header = document.createElement('div');
+        header.className = 'row';
+        header.innerHTML = `
+          <span class="badge">${escapeHtml(page.type)}</span>
+          <span class="badge">#${idx + 1}</span>
+          ${page.minute !== undefined ? `<span class="badge">${page.minute}'</span>` : ''}
+        `;
+        card.appendChild(header);
+
+        card.appendChild(inputField('Headline', page.headline, v => page.headline = v));
+        if (page.type === 'cover') {
+          card.appendChild(inputField('Subheadline', page.subheadline || '', v => page.subheadline = v));
+        }
+        if (page.type === 'highlight') {
+          card.appendChild(numberField('Minute', page.minute, v => page.minute = v));
+          card.appendChild(inputField('Caption', page.caption || '', v => page.caption = v));
+          card.appendChild(textAreaField('Explanation', page.explanation || '', v => page.explanation = v));
+        }
+        if (page.type === 'info') {
+          card.appendChild(textAreaField('Body', page.body || '', v => page.body = v));
+        }
+        card.appendChild(inputField('Image', page.image || '', v => page.image = v));
+
+        const actions = document.createElement('div');
+        actions.className = 'actions';
+
+        const leftActions = document.createElement('div');
+        leftActions.className = 'row';
+        const del = document.createElement('button');
+        del.textContent = 'Delete';
+        del.className = 'secondary';
+        del.onclick = () => deletePage(idx);
+        leftActions.appendChild(del);
+
+        const rightActions = document.createElement('div');
+        rightActions.className = 'row';
+        const up = document.createElement('button');
+        up.textContent = '↑';
+        up.className = 'secondary';
+        up.disabled = idx === 0;
+        up.onclick = () => movePage(idx, -1);
+        const down = document.createElement('button');
+        down.textContent = '↓';
+        down.className = 'secondary';
+        down.disabled = idx === story.pages.length - 1;
+        down.onclick = () => movePage(idx, 1);
+        rightActions.appendChild(up);
+        rightActions.appendChild(down);
+
+        actions.appendChild(leftActions);
+        actions.appendChild(rightActions);
+        card.appendChild(actions);
+
+        pagesEl.appendChild(card);
+      });
+    }
+
+    function movePage(idx, delta) {
+      const target = idx + delta;
+      if (target < 0 || target >= story.pages.length) return;
+      const tmp = story.pages[target];
+      story.pages[target] = story.pages[idx];
+      story.pages[idx] = tmp;
+      renderPages();
+    }
+
+    function deletePage(idx) {
+      story.pages.splice(idx, 1);
+      renderPages();
+    }
+
+    function inputField(labelText, value, onChange) {
+      const wrap = document.createElement('div');
+      wrap.innerHTML = `<label>${escapeHtml(labelText)}</label><input />`;
+      const input = wrap.querySelector('input');
+      input.value = value ?? '';
+      input.oninput = (e) => onChange(e.target.value);
+      return wrap;
+    }
+
+    function numberField(labelText, value, onChange) {
+      const wrap = document.createElement('div');
+      wrap.innerHTML = `<label>${escapeHtml(labelText)}</label><input type="number" />`;
+      const input = wrap.querySelector('input');
+      input.value = value ?? 0;
+      input.oninput = (e) => onChange(parseInt(e.target.value || '0', 10));
+      return wrap;
+    }
+
+    function textAreaField(labelText, value, onChange) {
+      const wrap = document.createElement('div');
+      wrap.innerHTML = `<label>${escapeHtml(labelText)}</label><textarea></textarea>`;
+      const input = wrap.querySelector('textarea');
+      input.value = value ?? '';
+      input.oninput = (e) => onChange(e.target.value);
+      return wrap;
+    }
+
+    async function saveStory() {
+      setStatus('Saving...');
+      saveBtn.disabled = true;
+      try {
+        const res = await fetch('/api/story', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(story, null, 2)
+        });
+        if (!res.ok) throw new Error('Failed to save story');
+        setStatus('Saved. Preview refreshed.');
+      } catch (e) {
+        setStatus(`Error: ${e.message}`);
+      } finally {
+        saveBtn.disabled = false;
+      }
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function setStatus(msg) {
+      statusEl.textContent = msg;
+    }
+
+    loadStory();
+  </script>
+</body>
+</html>
+

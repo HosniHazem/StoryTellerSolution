@@ -9,7 +9,9 @@ import type {
   CoverPage,
   HighlightPage,
   InfoPage,
-  StoryPage
+  StoryPage,
+  StoryConfig,
+  StoryPerspective
 } from './types.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -30,12 +32,31 @@ export class StoryBuilder {
   private events: MatchEvent[];
   private matchInfo: EventsData['matchInfo'];
   private assetsPath: string;
+  private config: StoryConfig;
+  private usedImages: Set<string> = new Set();
+
+  private static readonly IMAGE_POOL: string[] = [
+    '21521989.jpg', '21521990.jpg', '21522003.jpg', '21522014.jpg',
+    '21522057.jpg', '21522058.jpg', '21522071.jpg', '21522140.jpg',
+    '21522328.jpg', '21522345.jpg', '21522412.jpg', '21522413.jpg',
+    '21522414.jpg', '21522436.jpg', '21522449.jpg', '21522450.jpg'
+  ];
+
+  private static DEFAULT_CONFIG: StoryConfig = {
+    perspective: 'home',
+    teamId: null,
+    maxHighlightPages: 6,
+    includeOpponentBigChances: true,
+    includeCards: true,
+    cardMinuteCutoff: 30
+  };
 
   constructor(eventsPath: string, assetsPath: string) {
     this.eventsData = JSON.parse(readFileSync(eventsPath, 'utf-8')) as EventsData;
     this.assetsPath = assetsPath;
     this.events = this.eventsData.messages[0].message;
     this.matchInfo = this.eventsData.matchInfo;
+    this.config = this.loadConfig();
   }
 
   /**
@@ -80,13 +101,24 @@ export class StoryBuilder {
   private buildPages(): StoryPage[] {
     const pages: StoryPage[] = [];
 
-    // 1. Cover page
+    // 1. Intro / cover page (no score)
     pages.push(this.buildCoverPage());
 
     // 2. Highlight pages for key events
-    pages.push(...this.buildHighlightPages());
+    const highlights = this.buildHighlightPages();
+    const firstHalfHighlights = highlights.filter(h => h.minute <= 45);
+    const secondHalfHighlights = highlights.filter(h => h.minute > 45);
 
-    // 3. Final summary page
+    pages.push(...firstHalfHighlights);
+
+    // 3. Half-time info page (only if there are second-half events)
+    if (this.hasSecondHalf()) {
+      pages.push(this.buildHalfTimePage());
+    }
+
+    pages.push(...secondHalfHighlights);
+
+    // 4. Final summary page
     pages.push(this.buildSummaryPage());
 
     return pages;
@@ -98,15 +130,76 @@ export class StoryBuilder {
   private buildCoverPage(): CoverPage {
     const homeTeam = this.matchInfo.contestant[0].name;
     const awayTeam = this.matchInfo.contestant[1].name;
-    const goals = this.events.filter(e => e.type === 'goal' || e.type === 'penalty goal');
-    const homeGoals = goals.filter(g => g.teamRef1 === this.matchInfo.contestant[0].id).length;
-    const awayGoals = goals.filter(g => g.teamRef1 === this.matchInfo.contestant[1].id).length;
 
     return {
       type: 'cover',
-      headline: `${homeTeam} ${homeGoals}-${awayGoals} ${awayTeam}`,
-      subheadline: `${this.matchInfo.competition.knownName} • ${this.formatDate(this.matchInfo.date)}`,
-      image: this.getAssetPath('21521989.jpg') // Use first available image
+      headline: `${homeTeam} vs ${awayTeam}`,
+      subheadline: `${this.matchInfo.competition.knownName} • ${this.matchInfo.venue.longName} • ${this.formatDate(this.matchInfo.date)}`,
+      image: this.reserveSpecificImage('21521989.jpg') // Use first available image (and ensure uniqueness)
+    };
+  }
+
+  /**
+   * Create half-time info page with score at the break.
+   */
+  private buildHalfTimePage(): InfoPage {
+    const homeTeam = this.matchInfo.contestant[0].name;
+    const awayTeam = this.matchInfo.contestant[1].name;
+
+    const goals = this.events.filter(
+      e =>
+        (e.type === 'goal' || e.type === 'penalty goal') &&
+        (e.period === '1' || parseInt(e.minute || '0', 10) <= 45)
+    );
+
+    const homeGoals = goals.filter(g => g.teamRef1 === this.matchInfo.contestant[0].id).length;
+    const awayGoals = goals.filter(g => g.teamRef1 === this.matchInfo.contestant[1].id).length;
+
+    const headline = 'Half-time whistle';
+    const bodyLines: string[] = [];
+    bodyLines.push(`Score at the break: ${homeTeam} ${homeGoals}-${awayGoals} ${awayTeam}.`);
+
+    const postingTeamId = this.config.teamId;
+    const postingIsHome = postingTeamId && postingTeamId === this.matchInfo.contestant[0].id;
+    const postingIsAway = postingTeamId && postingTeamId === this.matchInfo.contestant[1].id;
+
+    if (postingTeamId) {
+      const postingGoals = postingIsHome ? homeGoals : postingIsAway ? awayGoals : null;
+      const otherGoals = postingIsHome ? awayGoals : postingIsAway ? homeGoals : null;
+
+      if (postingGoals !== null && otherGoals !== null) {
+        if (postingGoals > otherGoals) {
+          bodyLines.push('We take a lead into the interval after a strong first half.');
+        } else if (postingGoals < otherGoals) {
+          bodyLines.push('We trail at the break; we stay calm and adjust for the second half.');
+        } else {
+          bodyLines.push('All square at the break; we stay focused for the next 45.');
+        }
+      } else {
+        // Fallback to neutral if posting team not in contestants
+        if (homeGoals > awayGoals) {
+          bodyLines.push(`${homeTeam} take a lead into the interval after a strong first half.`);
+        } else if (awayGoals > homeGoals) {
+          bodyLines.push(`${awayTeam} go in ahead at half-time against the run of play.`);
+        } else {
+          bodyLines.push('All square at the break after a tightly contested first half.');
+        }
+      }
+    } else {
+      if (homeGoals > awayGoals) {
+        bodyLines.push(`${homeTeam} take a lead into the interval after a strong first half.`);
+      } else if (awayGoals > homeGoals) {
+        bodyLines.push(`${awayTeam} go in ahead at half-time against the run of play.`);
+      } else {
+        bodyLines.push('All square at the break after a tightly contested first half.');
+      }
+    }
+
+    return {
+      type: 'info',
+      headline,
+      body: bodyLines.join('\n\n'),
+      image: this.reserveSpecificImage('21522014.jpg')
     };
   }
 
@@ -114,51 +207,232 @@ export class StoryBuilder {
    * Create highlight pages for goals, cards, and key moments
    */
   private buildHighlightPages(): HighlightPage[] {
-    const highlights: HighlightPage[] = [];
-    
-    // Extract key events
-    const goals = this.events.filter(e => e.type === 'goal');
-    const penaltyGoals = this.events.filter(e => e.type === 'penalty goal');
-    const yellowCards = this.events.filter(e => e.type === 'yellow card');
-    const redCards = this.events.filter(e => e.type === 'red card');
+    type ScoredHighlight = HighlightPage & { importance: number };
 
-    // Add goals as highlights
-    [...goals, ...penaltyGoals].forEach((goal, index) => {
-      const teamName = this.getTeamName(goal.teamRef1);
-      const minute = parseInt(goal.minute);
-      const isPenalty = goal.type === 'penalty goal';
-      
-      highlights.push({
-        type: 'highlight',
-        minute: minute,
-        headline: isPenalty ? '⚽ Penalty Goal!' : '⚽ GOAL!',
-        caption: `${teamName} scores${isPenalty ? ' from the penalty spot' : ''}`,
-        image: this.getImageForEvent(goal, index),
-        explanation: this.cleanComment(goal.comment)
-      });
-    });
+    const scored: ScoredHighlight[] = [];
 
-    // Add significant cards
-    [...yellowCards, ...redCards].forEach((card, index) => {
-      const teamName = this.getTeamName(card.teamRef1);
-      const minute = parseInt(card.minute);
-      const isRed = card.type === 'red card';
-      
-      // Only include red cards and early yellow cards to keep story focused
-      if (isRed || minute < 30) {
-        highlights.push({
+    // Track score over time to understand turning points
+    const homeTeamId = this.matchInfo.contestant[0].id;
+    const awayTeamId = this.matchInfo.contestant[1].id;
+    let homeGoalsSoFar = 0;
+    let awayGoalsSoFar = 0;
+
+    this.events.forEach((event, index) => {
+      const classification = this.classifyEvent(event);
+      if (classification.importance <= 0) {
+        return;
+      }
+
+      const minute = parseInt(event.minute || '0', 10);
+      const teamName = this.getTeamName(event.teamRef1);
+      const narrativeName = this.getNarrativeTeamName(event.teamRef1);
+      const isPostingTeam = this.isPostingTeam(event.teamRef1);
+
+      // Goals and penalty goals
+      if (event.type === 'goal' || event.type === 'penalty goal') {
+        const isPenalty = event.type === 'penalty goal';
+
+        // Score before this goal
+        const isHomeTeam = event.teamRef1 === homeTeamId;
+        const scoreBeforeHome = homeGoalsSoFar;
+        const scoreBeforeAway = awayGoalsSoFar;
+
+        // Update running score
+        if (isHomeTeam) {
+          homeGoalsSoFar += 1;
+        } else if (event.teamRef1 === awayTeamId) {
+          awayGoalsSoFar += 1;
+        }
+
+        const scoreAfterHome = homeGoalsSoFar;
+        const scoreAfterAway = awayGoalsSoFar;
+
+        // Narrative-aware headline & caption
+        const goalForPostingTeam = isPostingTeam;
+        const postingTeamLeadingAfter =
+          goalForPostingTeam &&
+          ((isHomeTeam && scoreAfterHome > scoreAfterAway) ||
+            (!isHomeTeam && scoreAfterAway > scoreAfterHome));
+
+        const wasLevelBefore = scoreBeforeHome === scoreBeforeAway;
+        const wasBehindBefore =
+          goalForPostingTeam &&
+          ((isHomeTeam && scoreBeforeHome < scoreBeforeAway) ||
+            (!isHomeTeam && scoreBeforeAway < scoreBeforeHome));
+
+        const leadMarginAfter = Math.abs(scoreAfterHome - scoreAfterAway);
+        const isLate = minute >= 80;
+
+        let headline: string;
+        let caption: string;
+
+        if (scoreBeforeHome === 0 && scoreBeforeAway === 0) {
+          // First goal of the match
+          headline = isPenalty ? '⚽ Breakthrough from the spot!' : '⚽ Breakthrough!';
+          caption = `${narrativeName} open the scoring and set the tone of the match.`;
+        } else if (wasBehindBefore && postingTeamLeadingAfter) {
+          // Comeback turning point
+          headline = '⚽ Turnaround!';
+          caption = `${narrativeName} flip the game on its head with a crucial goal.`;
+        } else if (goalForPostingTeam && wasLevelBefore && postingTeamLeadingAfter) {
+          // Go-ahead goal from level
+          headline = '⚽ Go-ahead goal!';
+          caption = `${narrativeName} edge in front as the pressure pays off.`;
+        } else if (goalForPostingTeam && leadMarginAfter >= 2 && minute >= 60) {
+          // Extending an already strong lead late on
+          headline = '⚽ Turning the screw!';
+          caption = `${narrativeName} tighten their grip on the match with another goal.`;
+        } else if (goalForPostingTeam && isLate) {
+          // Late clincher
+          headline = isPenalty ? '⚽ Late penalty!' : '⚽ Late clincher!';
+          caption = `${narrativeName} all but settle the contest in the closing stages.`;
+        } else if (goalForPostingTeam && wasBehindBefore && scoreAfterHome === scoreAfterAway) {
+          // From behind to level
+          headline = '⚽ Level again!';
+          caption = `${narrativeName} draw level and ramp up the pressure.`;
+        } else if (goalForPostingTeam && wasBehindBefore && !postingTeamLeadingAfter) {
+          // From behind but still behind (pull one back)
+          headline = '⚽ Back in it!';
+          caption = `${narrativeName} pull one back and keep pushing.`;
+        } else {
+          // Generic but still contextual
+          const hasPostingTeam = !!this.config.teamId;
+          if (!goalForPostingTeam && hasPostingTeam) {
+            // Opponent scores against us: keep calm, fan-friendly tone
+            headline = isPenalty ? '⚽ Penalty goal.' : '⚽ Goal.';
+            caption = `${teamName} score, we stay composed and push on.`;
+          } else {
+            headline = isPenalty ? '⚽ Penalty Goal!' : '⚽ GOAL!';
+            const isExplicitPostingTeam =
+              isPostingTeam && this.config.teamId && event.teamRef1 === this.config.teamId;
+            const advantagePhrase = isExplicitPostingTeam
+              ? 'extend our advantage'
+              : 'extend their advantage';
+            caption = `${narrativeName} ${isPostingTeam ? advantagePhrase : 'find the net'}${isPenalty ? ' from the spot' : ''}.`;
+          }
+        }
+
+        // If this is a penalty, first show the award as its own moment
+        if (isPenalty) {
+          const { won, lost } = this.getPenaltyContext(event);
+          if (won || lost) {
+            const contextParts: string[] = [];
+            if (won) {
+              const isWonPostingTeam = this.isPostingTeam(won.teamRef1);
+              contextParts.push(
+                this.localizePronouns(this.cleanComment(won.comment), isWonPostingTeam)
+              );
+            }
+            if (lost) {
+              const isLostPostingTeam = this.isPostingTeam(lost.teamRef1);
+              contextParts.push(
+                this.localizePronouns(this.cleanComment(lost.comment), isLostPostingTeam)
+              );
+            }
+
+            const awardMinute = won
+              ? parseInt(won.minute || event.minute || '0', 10)
+              : minute;
+
+            const hasPostingTeam = !!this.config.teamId;
+            let awardCaption: string;
+            if (isPostingTeam) {
+              awardCaption = `${narrativeName} earn a golden chance from the spot.`;
+            } else if (hasPostingTeam) {
+              awardCaption = `${teamName} win a penalty, we stay calm and regroup.`;
+            } else {
+              awardCaption = `${narrativeName} concede a crucial penalty.`;
+            }
+
+            scored.push({
+              type: 'highlight',
+              minute: awardMinute,
+              headline: 'Penalty awarded!',
+              caption: awardCaption,
+              image: this.getImageForEvent(won ?? event, index),
+              explanation: contextParts.join(' '),
+              // Slightly lower importance so the outcome slide is prioritised if we hit the max
+              importance: classification.importance - 2
+            });
+          }
+        }
+
+        const explanation = this.localizePronouns(
+          this.cleanComment(event.comment),
+          isPostingTeam
+        );
+
+        scored.push({
           type: 'highlight',
-          minute: minute,
+          minute,
+          headline,
+          caption,
+          image: this.getImageForEvent(event, index),
+          explanation,
+          importance: classification.importance
+        });
+        return;
+      }
+
+      // Big chances (posts, dangerous misses/saves/blocks)
+      if (classification.category === 'big_chance') {
+        const headline = event.type === 'post' ? '🚨 Off the Post!' : '🚨 Big Chance!';
+        const caption = isPostingTeam
+          ? `${narrativeName} go close to scoring`
+          : `${narrativeName} threaten the goal`;
+        const explanation = this.localizePronouns(
+          this.cleanComment(event.comment),
+          isPostingTeam
+        );
+
+        scored.push({
+          type: 'highlight',
+          minute,
+          headline,
+          caption,
+          image: this.getImageForEvent(event, index),
+          explanation,
+          importance: classification.importance
+        });
+        return;
+      }
+
+      // Cards
+      if (classification.category === 'card' && this.config.includeCards) {
+        const isRed = event.type === 'red card';
+        const caption = isRed
+          ? `${narrativeName} reduced to ten men`
+          : `${narrativeName} player booked`;
+
+        const explanation = this.localizePronouns(
+          this.cleanComment(event.comment),
+          isPostingTeam
+        );
+
+        scored.push({
+          type: 'highlight',
+          minute,
           headline: isRed ? '🟥 Red Card!' : '🟨 Yellow Card',
-          caption: `${teamName} player booked`,
-          image: this.getImageForEvent(card, index + goals.length),
-          explanation: this.cleanComment(card.comment)
+          caption,
+          image: this.getImageForEvent(event, index),
+          explanation,
+          importance: classification.importance
         });
       }
     });
 
-    // Sort by minute
-    return highlights.sort((a, b) => a.minute - b.minute);
+    if (scored.length === 0) {
+      return [];
+    }
+
+    // Limit number of highlights by importance, then restore chronological order
+    const maxHighlights = Math.max(1, this.config.maxHighlightPages);
+    const top = scored
+      .sort((a, b) => b.importance - a.importance || a.minute - b.minute)
+      .slice(0, maxHighlights)
+      .sort((a, b) => a.minute - b.minute);
+
+    return top.map(({ importance, ...page }) => page);
   }
 
   /**
@@ -171,24 +445,50 @@ export class StoryBuilder {
     const homeGoals = goals.filter(g => g.teamRef1 === this.matchInfo.contestant[0].id).length;
     const awayGoals = goals.filter(g => g.teamRef1 === this.matchInfo.contestant[1].id).length;
 
-    const winner = homeGoals > awayGoals ? homeTeam : 
-                   awayGoals > homeGoals ? awayTeam : 
-                   'Draw';
+    const winnerTeamId =
+      homeGoals > awayGoals
+        ? this.matchInfo.contestant[0].id
+        : awayGoals > homeGoals
+        ? this.matchInfo.contestant[1].id
+        : null;
+
+    const winner =
+      homeGoals > awayGoals ? homeTeam :
+      awayGoals > homeGoals ? awayTeam :
+      'Draw';
+
+    const postingTeamWins =
+      winnerTeamId !== null &&
+      this.config.teamId !== null &&
+      this.config.teamId !== undefined &&
+      winnerTeamId === this.config.teamId;
+
+    const headline =
+      winner === 'Draw'
+        ? 'Match Drawn'
+        : postingTeamWins
+        ? 'We Won! 🏆'
+        : `${winner} Wins! 🏆`;
 
     let body = `Full Time: ${homeTeam} ${homeGoals}-${awayGoals} ${awayTeam}\n\n`;
     body += `Venue: ${this.matchInfo.venue.longName}\n`;
     body += `Competition: ${this.matchInfo.competition.knownName}\n\n`;
-    
-    if (winner !== 'Draw') {
-      body += `${winner} takes all three points with a dominant performance.`;
+
+    if (winner === 'Draw') {
+      body += 'Both teams share the points in an evenly contested match.';
+    } else if (postingTeamWins) {
+      body += 'We take all three points with a dominant performance.';
+    } else if (this.config.teamId) {
+      body += 'We fall short today but will regroup and go again.';
     } else {
-      body += `Both teams share the points in an evenly contested match.`;
+      body += `${winner} takes all three points.`;
     }
 
     return {
       type: 'info',
-      headline: winner !== 'Draw' ? `${winner} Wins! 🏆` : 'Match Drawn',
-      body: body
+      headline,
+      body,
+      image: this.reserveSpecificImage('21522057.jpg')
     };
   }
 
@@ -201,20 +501,69 @@ export class StoryBuilder {
   }
 
   /**
+   * Helper: Get the narrative subject for a team:
+   * - If story-config.json has a teamId and it matches, use "We"
+   * - Otherwise fall back to the actual team name
+   */
+  private getNarrativeTeamName(teamRef: string | undefined): string {
+    if (teamRef && this.config.teamId && teamRef === this.config.teamId) {
+      return 'We';
+    }
+    return teamRef ? this.getTeamName(teamRef) : 'Unknown';
+  }
+
+  /**
+   * Helper: Adjust pronouns for "our" perspective when the posting team is speaking.
+   * Currently focuses on "their" → "our" while preserving capitalization.
+   */
+  private localizePronouns(text: string, isPostingTeam: boolean): string {
+    if (!isPostingTeam) return text;
+    return text.replace(/\b[tT]heir\b/g, (match) =>
+      match[0] === 'T' ? 'Our' : 'our'
+    );
+  }
+
+  /**
    * Helper: Map events to available images
    */
   private getImageForEvent(event: MatchEvent, index: number): string {
-    // Available images based on assets folder
-    const images = [
-      '21521989.jpg', '21521990.jpg', '21522003.jpg', '21522014.jpg',
-      '21522057.jpg', '21522058.jpg', '21522071.jpg', '21522140.jpg',
-      '21522328.jpg', '21522345.jpg', '21522412.jpg', '21522413.jpg',
-      '21522414.jpg', '21522436.jpg', '21522449.jpg', '21522450.jpg'
-    ];
-    
-    // Cycle through available images
-    const imageIndex = index % images.length;
-    return this.getAssetPath(images[imageIndex]);
+    const images = StoryBuilder.IMAGE_POOL;
+    const total = images.length;
+    const startIndex = index % total;
+
+    // Prefer an unused image, starting from a position based on the event index
+    for (let i = 0; i < total; i++) {
+      const candidateIndex = (startIndex + i) % total;
+      const filename = images[candidateIndex];
+      if (!this.usedImages.has(filename)) {
+        this.usedImages.add(filename);
+        return this.getAssetPath(filename);
+      }
+    }
+
+    // Fallback: all images used, so reuse deterministically
+    const fallback = images[startIndex];
+    return this.getAssetPath(fallback);
+  }
+
+  /**
+   * Helper: Reserve a specific image filename if available, otherwise pick
+   * the first unused image from the pool. Ensures we don't reuse images
+   * until we've exhausted the pool.
+   */
+  private reserveSpecificImage(preferred: string): string {
+    const images = StoryBuilder.IMAGE_POOL;
+
+    let filename = preferred;
+    if (this.usedImages.has(preferred)) {
+      const unused = images.find(img => !this.usedImages.has(img));
+      if (unused) {
+        filename = unused;
+      }
+    }
+
+    this.usedImages.add(filename);
+    return this.getAssetPath(filename);
   }
 
   /**
@@ -243,5 +592,136 @@ export class StoryBuilder {
       month: 'long', 
       year: 'numeric' 
     });
+  }
+
+  /**
+   * Load story configuration from the project root, falling back to defaults.
+   */
+  private loadConfig(): StoryConfig {
+    const projectRoot = join(__dirname, '..');
+    const configPath = join(projectRoot, 'story-config.json');
+
+    try {
+      const raw = readFileSync(configPath, 'utf-8');
+      const parsed = JSON.parse(raw) as Partial<StoryConfig>;
+      return {
+        ...StoryBuilder.DEFAULT_CONFIG,
+        ...parsed
+      };
+    } catch {
+      return StoryBuilder.DEFAULT_CONFIG;
+    }
+  }
+
+  /**
+   * Determine the "posting team" id based on the configured perspective.
+   */
+  private getPostingTeamId(): string | null {
+    // Explicit teamId always wins if provided
+    if (this.config.teamId) {
+      return this.config.teamId;
+    }
+
+    const perspective: StoryPerspective = this.config.perspective;
+
+    if (perspective === 'home') {
+      return this.matchInfo.contestant[0]?.id ?? null;
+    }
+    if (perspective === 'away') {
+      return this.matchInfo.contestant[1]?.id ?? null;
+    }
+    if (perspective === 'team') {
+      return this.config.teamId ?? null;
+    }
+    // neutral
+    return null;
+  }
+
+  private isPostingTeam(teamRef: string | undefined): boolean {
+    if (!teamRef) return false;
+    const postingTeamId = this.getPostingTeamId();
+    if (!postingTeamId) return false;
+    return teamRef === postingTeamId;
+  }
+
+  /**
+   * Classify an event into a narrative category and assign an importance score.
+   * This is used to pick the best moments for the story.
+   */
+  private classifyEvent(event: MatchEvent): { category: 'goal' | 'big_chance' | 'card' | 'other'; importance: number } {
+    const minute = parseInt(event.minute || '0', 10);
+    const isPostingTeam = this.isPostingTeam(event.teamRef1);
+
+    // All goals and penalty goals are top-tier
+    if (event.type === 'goal' || event.type === 'penalty goal') {
+      let importance = 100;
+      if (isPostingTeam) importance += 10;
+      return { category: 'goal', importance };
+    }
+
+    // Woodwork is a big chance
+    if (event.type === 'post') {
+      let importance = 80;
+      if (!this.config.includeOpponentBigChances && !isPostingTeam) {
+        importance = 0;
+      } else if (isPostingTeam) {
+        importance += 5;
+      }
+      return { category: 'big_chance', importance };
+    }
+
+    // Discipline
+    if (event.type === 'red card' || event.type === 'yellow card') {
+      if (!this.config.includeCards) {
+        return { category: 'card', importance: 0 };
+      }
+
+      if (event.type === 'red card') {
+        // Always important
+        return { category: 'card', importance: 85 };
+      }
+
+      // Yellow cards: only early ones by default
+      if (minute >= this.config.cardMinuteCutoff) {
+        return { category: 'card', importance: 0 };
+      }
+
+      let importance = 45;
+      if (isPostingTeam) importance += 5;
+      return { category: 'card', importance };
+    }
+
+    // Everything else is not highlight-worthy by default
+    return { category: 'other', importance: 0 };
+  }
+
+  /**
+   * Detect if the match contains any second-half events (for placing half-time page).
+   */
+  private hasSecondHalf(): boolean {
+    return this.events.some(e => e.period === '2' || parseInt(e.minute || '0', 10) > 45);
+  }
+
+  /**
+   * Find the penalty-won and penalty-lost events that belong to a given penalty goal.
+   */
+  private getPenaltyContext(goalEvent: MatchEvent): { won?: MatchEvent; lost?: MatchEvent } {
+    const minute = parseInt(goalEvent.minute || '0', 10);
+    const period = goalEvent.period;
+
+    const related = this.events.filter(e => {
+      if (!e.type) return false;
+      if (e.period !== period) return false;
+      const m = parseInt(e.minute || '0', 10);
+      // Same minute or immediately preceding minute to capture the foul
+      const closeInTime = m === minute || m === minute - 1;
+      const isPenaltyContext = e.type === 'penalty won' || e.type === 'penalty lost';
+      return closeInTime && isPenaltyContext;
+    });
+
+    const won = related.find(e => e.type === 'penalty won');
+    const lost = related.find(e => e.type === 'penalty lost');
+
+    return { won, lost };
   }
 }

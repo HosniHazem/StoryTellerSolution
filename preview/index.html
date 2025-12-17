@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="icon" type="image/x-icon" href="/assets/getstoryteller_logo.ico">
   <title>Story Preview</title>
   <style>
     * {
@@ -198,10 +199,11 @@
 
     .body-text {
       font-size: clamp(14px, 3.5vw, 16px);
-      line-height: 1.6;
-      opacity: 0.9;
-      text-align: left;
-      white-space: pre-line;
+      line-height: 1.5;
+      opacity: 0.85;
+      max-width: 90%;
+      margin: 0 auto;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.5);
       word-wrap: break-word;
     }
 
@@ -286,8 +288,8 @@
     }
 
     .page-type-info .page-main {
-      justify-content: flex-start;
-      text-align: left;
+      justify-content: center;
+      text-align: center;
     }
 
     /* Keyboard shortcuts hint - Hide on small screens */
@@ -439,15 +441,15 @@
       } else if (page.type === 'highlight') {
         html += `<h1 class="headline">${escapeHtml(page.headline)}</h1>`;
         if (page.caption) {
-          html += `<p class="caption">${escapeHtml(page.caption)}</p>`;
+          html += `<p class="caption">${formatRichText(page.caption, false)}</p>`;
         }
         if (page.explanation) {
-          html += `<p class="explanation">${escapeHtml(page.explanation)}</p>`;
+          html += `<p class="explanation">${formatRichText(page.explanation, false)}</p>`;
         }
       } else if (page.type === 'info') {
         html += `<h2 class="headline">${escapeHtml(page.headline)}</h2>`;
         if (page.body) {
-          html += `<p class="body-text">${escapeHtml(page.body)}</p>`;
+          html += `<p class="body-text">${formatRichText(page.body, true)}</p>`;
         }
       }
 
@@ -479,6 +481,29 @@
       const div = document.createElement('div');
       div.textContent = text;
       return div.innerHTML;
+    }
+
+    // Format rich text by escaping, converting newlines to <br>, and bolding key labels
+    function formatRichText(text, withBreaks) {
+      let html = escapeHtml(text);
+      if (withBreaks) {
+        html = html.replace(/\n/g, '<br />');
+      }
+
+      const patterns = [
+        { regex: /Goal!/g, replacement: '<strong>Goal!</strong>' },
+        { regex: /Score at the break:/g, replacement: '<strong>Score at the break:</strong>' },
+        { regex: /\bPenalty\b/g, replacement: '<strong>Penalty</strong>' },
+        { regex: /Full Time:/g, replacement: '<strong>Full Time:</strong>' },
+        { regex: /Venue:/g, replacement: '<strong>Venue:</strong>' },
+        { regex: /Competition:/g, replacement: '<strong>Competition:</strong>' }
+      ];
+
+      patterns.forEach(p => {
+        html = html.replace(p.regex, p.replacement);
+      });
+
+      return html;
     }
 
     // Navigation functions
