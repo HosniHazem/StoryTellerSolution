@@ -19,8 +19,15 @@ npm run build
 npm run preview
 # Visit http://localhost:3000
 
-# 4. Validate output
+# 4. Edit story in browser (optional)
+npm run editor
+# Visit http://localhost:3000/preview/editor.html
+
+# 5. Validate output
 npm run validate
+
+# 6. Run tests
+npm test
 ```
 
 **That's it!** You now have a working story generator.
@@ -52,25 +59,52 @@ Try the preview at http://localhost:3000 after running `npm run preview`
 ## 🎯 Features
 
 ### Story Builder
-- ✅ Intelligent event filtering (goals, penalties, cards)
+- ✅ **Intelligent event classification** with importance scoring
+- ✅ **Team perspective support** (We/our language via config)
+- ✅ **Calm tone for losses** (fan-friendly when team is losing)
+- ✅ **Emotional arc focus** (tension → breakthrough → dominance → closure)
+- ✅ **Player names in headlines** (personalized storytelling)
+- ✅ **Match context** (matchweek, stage, key players)
 - ✅ Chronological narrative flow
-- ✅ Automatic image assignment
+- ✅ Automatic image assignment (no duplicates)
+- ✅ **Half-time page** with score at break
+- ✅ **Penalty storytelling** (award + outcome pages)
 - ✅ Schema-compliant output
-- ✅ Production-ready code
+- ✅ Production-ready TypeScript code
 
 ### Preview Viewer
 - ✅ Instagram/Snapchat-style interface
-- ✅ Keyboard navigation (← → Space)
+- ✅ **Auto-advance** with pause on hover/touch (6 seconds per page)
+- ✅ **Smooth transitions** (fade animations)
+- ✅ **Full keyboard navigation** (← → Space Home End)
 - ✅ Touch/swipe support
-- ✅ Progress tracking
+- ✅ Progress tracking with visual indicator
+- ✅ **Rich text formatting** (bold labels)
+- ✅ **Share functionality** (copy link, social sharing)
+- ✅ **Export options** (JSON download, image sequence)
+- ✅ **Accessibility** (ARIA labels, screen reader support)
+- ✅ **Analytics tracking** (page views, time on page, completion)
+- ✅ **Performance optimized** (lazy loading, image preloading)
 - ✅ Responsive design
 - ✅ Zero dependencies (vanilla JS)
+
+### Story Editor
+- ✅ In-browser editor for live story manipulation
+- ✅ Edit all text fields (headline, caption, explanation, body)
+- ✅ Reorder pages (↑/↓ buttons)
+- ✅ Delete pages
+- ✅ Save changes via API
+- ✅ Live preview integration
 
 ### Developer Experience
 - ✅ Simple npm scripts
 - ✅ Clear error messages
 - ✅ Helpful CLI output
 - ✅ Comprehensive documentation
+- ✅ **Automated tests** (npm test)
+- ✅ **CI/CD pipeline** (GitHub Actions)
+- ✅ **Accessibility compliant** (WCAG guidelines)
+- ✅ **Analytics ready** (tracking infrastructure)
 - ✅ Easy to extend
 
 ---
@@ -79,17 +113,22 @@ Try the preview at http://localhost:3000 after running `npm run preview`
 
 ```
 ├── src/
-│   ├── builder.js      # Core story generation logic
-│   ├── cli.js          # Command-line interface
-│   ├── server.js       # Preview HTTP server
-│   └── validate.js     # JSON Schema validator
+│   ├── builder.ts      # Core story generation logic (TypeScript)
+│   ├── cli.ts          # Command-line interface
+│   ├── server.ts       # Preview HTTP server + editor API
+│   ├── validate.ts     # JSON Schema validator
+│   └── types.ts        # TypeScript type definitions
 │
 ├── preview/
-│   └── index.html      # Story viewer (Instagram-style)
+│   ├── index.html      # Story viewer (Instagram-style)
+│   └── editor.html     # In-browser story editor
 │
 ├── data/
-│   ├── match_events.json       # Input: match data
-│   ├── celtic-squad.json       # Squad information
+│   ├── match_events.json              # Input: match data
+│   ├── match_events_celtic_loss.json  # Test: Celtic losing
+│   ├── match_events_draw.json         # Test: Draw match
+│   ├── match_events_two_teams_score.json # Test: Both teams score
+│   ├── celtic-squad.json              # Squad information
 │   └── kilmarnock-squad.json
 │
 ├── assets/             # Match images (16 available)
@@ -99,6 +138,12 @@ Try the preview at http://localhost:3000 after running `npm run preview`
 │
 ├── schema/
 │   └── story.schema.json  # JSON Schema for validation
+│
+├── story-config.json   # Story configuration (perspective, teamId, etc.)
+├── tests/
+│   └── story-builder.test.js # Automated tests
+├── .github/workflows/
+│   └── ci.yml         # GitHub Actions CI/CD
 │
 ├── DECISIONS.md        # Architecture decisions
 ├── AI_USAGE.md         # How AI assisted development
@@ -133,10 +178,10 @@ Try the preview at http://localhost:3000 after running `npm run preview`
     {
       "type": "highlight",
       "minute": 9,
-      "headline": "⚽ GOAL!",
-      "caption": "Celtic scores",
+      "headline": "⚽ Johnny Kenny!",
+      "caption": "We extend our advantage.",
       "image": "../assets/21522003.jpg",
-      "explanation": "Johnny Kenny (Celtic) left footed shot..."
+      "explanation": "Goal! Celtic 1, Kilmarnock 0. Johnny Kenny (Celtic) left footed shot..."
     }
     // ... more highlights ...
   ]
@@ -144,9 +189,9 @@ Try the preview at http://localhost:3000 after running `npm run preview`
 ```
 
 ### Page Types
-1. **Cover**: Match result and context
-2. **Highlight**: Goals, penalties, key moments (with minute marker)
-3. **Info**: Final summary and statistics
+1. **Cover**: Match intro (no score) with competition info
+2. **Highlight**: Goals with player names, penalties, key moments (with minute marker)
+3. **Info**: Half-time score page and final summary with match context
 
 ---
 
@@ -185,11 +230,32 @@ ajv.validate(schema, story) // ✅
 
 ## 🔧 Configuration
 
+### Story Configuration (`story-config.json`)
+
+```json
+{
+  "perspective": "home",
+  "teamId": "dvnjvad3p09dugr79gktlrtll",
+  "maxHighlightPages": 10,
+  "includeOpponentBigChances": true,
+  "includeCards": true,
+  "cardMinuteCutoff": 30
+}
+```
+
+**Settings Explained**:
+- `perspective`: Story perspective (`"home"`, `"away"`, `"neutral"`, or `"team"`)
+- `teamId`: Team ID for "We/our" language (null for neutral perspective)
+- `maxHighlightPages`: Maximum highlight pages (excluding cover/info)
+- `includeOpponentBigChances`: Include opponent's big chances (posts)
+- `includeCards`: Include card events as highlights
+- `cardMinuteCutoff`: Only yellow cards before this minute are included
+
 ### Customizing Event Selection
 
-Edit `src/builder.js` to include different event types:
+Edit `src/builder.ts` to include different event types:
 
-```javascript
+```typescript
 buildHighlightPages() {
   // Add more event types
   const assists = this.events.filter(e => e.type === 'assist');
@@ -202,15 +268,47 @@ buildHighlightPages() {
 }
 ```
 
-### Changing Page Limits
+---
 
-```javascript
-// Limit to top N events
-buildHighlightPages() {
-  const topEvents = this.selectTopEvents(10);
-  return topEvents.map(e => this.createHighlightPage(e));
-}
-```
+## ✨ Enhanced Features
+
+### 🎯 Phase 1: Quick Wins
+- **Player Names in Headlines**: Personalized storytelling with player names (e.g., "⚽ Johnny Kenny!" instead of "⚽ GOAL!")
+- **Auto-Advance**: Stories automatically progress every 6 seconds with pause on hover/touch
+- **Smooth Transitions**: Beautiful fade animations between pages for professional polish
+
+### 🌐 Phase 2: Product Thinking
+- **Share Functionality**: 
+  - Copy story link to clipboard
+  - Share on Twitter and Facebook
+  - Export story as JSON
+  - Download all story images
+- **Match Context**: Enhanced summary pages with:
+  - Matchweek information
+  - Stage/competition phase
+  - Key players (top scorers highlighted)
+- **Export Options**: 
+  - Download complete story JSON
+  - Export image sequence for all pages
+
+### ♿ Phase 3: Production Polish
+- **Accessibility**:
+  - Full ARIA labels and roles
+  - Screen reader support with live announcements
+  - Complete keyboard navigation (← → Space Home End)
+  - Skip links for keyboard users
+  - High contrast mode support
+  - Focus indicators
+- **Analytics Tracking**:
+  - Page view tracking
+  - Time on page metrics
+  - Story completion detection
+  - Interaction logging (ready for server integration)
+- **Performance Optimizations**:
+  - Image lazy loading
+  - Background image preloading
+  - Efficient caching system
+  - Next page preloading for smooth transitions
 
 ---
 
@@ -231,6 +329,19 @@ buildHighlightPages() {
 
 ## 🧪 Testing & Validation
 
+### Automated Tests
+```bash
+npm test
+```
+Runs test suite covering:
+- ✅ Cover page generation (no score)
+- ✅ Half-time page insertion
+- ✅ Image uniqueness tracking
+- ✅ Calm tone for losses
+- ✅ Team perspective handling
+- ✅ Player name extraction
+- ✅ Match context inclusion
+
 ### Manual Testing
 ```bash
 # 1. Build story
@@ -246,6 +357,17 @@ npm run preview
 # ✅ Check: Navigate through all pages
 # ✅ Check: Images load correctly
 # ✅ Check: Text is readable
+# ✅ Check: Rich text formatting (bold labels)
+# ✅ Check: Auto-advance works (pauses on hover)
+# ✅ Check: Share menu functions
+# ✅ Check: Keyboard navigation (Home/End keys)
+# ✅ Check: Screen reader announcements (if available)
+
+# 4. Edit story
+npm run editor
+# ✅ Check: Edit text fields
+# ✅ Check: Reorder/delete pages
+# ✅ Check: Save changes
 ```
 
 ### Automated Validation
