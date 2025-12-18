@@ -160,6 +160,15 @@
       -webkit-overflow-scrolling: touch;
     }
 
+    /* For long squad lists, pin content to top and keep a clear area above navigation */
+    .page-main-squad {
+      justify-content: flex-start;
+      align-items: stretch;
+      padding: 10px 0 8px;
+      /* Let the inner squad box handle scrolling so content doesn't sit under nav buttons */
+      overflow: hidden;
+    }
+
     .headline {
       font-size: clamp(32px, 8vw, 48px);
       font-weight: 800;
@@ -198,13 +207,89 @@
     }
 
     .body-text {
-      font-size: clamp(14px, 3.5vw, 16px);
-      line-height: 1.5;
+      /* Slightly smaller text so long squad lists fit on one page */
+      font-size: clamp(12px, 3vw, 14px);
+      line-height: 1.35;
       opacity: 0.85;
       max-width: 90%;
       margin: 0 auto;
       text-shadow: 0 1px 4px rgba(0,0,0,0.5);
       word-wrap: break-word;
+    }
+
+    /* Squad layout for \"Our Squad Today\" page */
+    .squad-layout {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: stretch;
+      justify-content: flex-start;
+      width: 100%;
+      
+      /* Make squad content scroll inside this box and leave room for Next/Previous */
+      max-height: calc(100% - 70px); /* approx. nav height */
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 0 4px 60px; /* bottom padding so last lines clear the nav area */
+    }
+
+    .squad-section {
+      width: 100%;
+    }
+
+    .squad-row {
+      display: flex;
+      gap: 12px;
+      justify-content: space-between;
+      align-items: flex-start;
+      width: 100%;
+    }
+
+    .squad-col {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .squad-title {
+      font-size: 0.9em;
+      font-weight: 700; /* make position titles bold */
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      color: #fff !important; /* force white text for clear contrast */
+      opacity: 0.95;
+    }
+
+    .squad-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      font-size: 0.85em;
+      line-height: 1.3;
+      text-align: left;
+    }
+
+    .squad-list li {
+      margin-bottom: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .squad-bottom {
+      margin-top: 4px;
+      text-align: center;
+    }
+
+    .squad-bottom .squad-list {
+      display: inline-block;
+      text-align: left;
+    }
+
+    @media (max-width: 480px) {
+      .squad-row {
+        flex-direction: column;
+        gap: 6px;
+      }
     }
 
     /* Navigation - Touch-friendly */
@@ -802,7 +887,11 @@
       html += `</div>`;
 
       // Main content based on type
-      html += `<div class="page-main">`;
+      const isSquadPageMain =
+        page.type === 'info' &&
+        (page.headline === 'Our Squad Today' ||
+          /Squad$/i.test(page.headline || ''));
+      html += `<div class="page-main${isSquadPageMain ? ' page-main-squad' : ''}">`;
       
       if (page.type === 'cover') {
         html += `<h1 class="headline">${escapeHtml(page.headline)}</h1>`;
@@ -820,7 +909,15 @@
       } else if (page.type === 'info') {
         html += `<h2 class="headline">${escapeHtml(page.headline)}</h2>`;
         if (page.body) {
-          html += `<p class="body-text">${formatRichText(page.body, true)}</p>`;
+          const isSquadPage =
+            page.headline === 'Our Squad Today' ||
+            /Squad$/i.test(page.headline || '');
+
+          if (isSquadPage) {
+            html += renderSquadLayout(page.body);
+          } else {
+            html += `<p class="body-text">${formatRichText(page.body, true)}</p>`;
+          }
         }
       }
 
@@ -985,6 +1082,104 @@
         html = html.replace(p.regex, p.replacement);
       });
 
+      return html;
+    }
+
+    // Render squad layout:
+    // - Left column: Goalkeepers on top, Defenders below
+    // - Right column: Midfielders on top, Attackers below
+    // - Coach centered underneath both columns
+    function renderSquadLayout(bodyText) {
+      const sections = bodyText.split('\n\n').map(block => block.trim()).filter(Boolean);
+
+      const parsed = {
+        goalkeepers: null,
+        defenders: null,
+        midfielders: null,
+        attackers: null,
+        coachLines: []
+      };
+
+      function parseSection(block) {
+        const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
+        if (lines.length === 0) return null;
+        const headerLine = lines.shift();
+        const headerMatch = headerLine.match(/^([^:]+):/);
+        const title = headerMatch ? headerMatch[1].trim() : headerLine.trim();
+        const items = lines.map(l => l.replace(/^-\s*/, '').trim()).filter(Boolean);
+        return { title, items };
+      }
+
+      sections.forEach(block => {
+        if (block.startsWith('Goalkeepers:')) {
+          parsed.goalkeepers = parseSection(block);
+        } else if (block.startsWith('Defenders:')) {
+          parsed.defenders = parseSection(block);
+        } else if (block.startsWith('Midfielders:')) {
+          parsed.midfielders = parseSection(block);
+        } else if (block.startsWith('Attackers:')) {
+          parsed.attackers = parseSection(block);
+        } else if (block.startsWith('Coach:')) {
+          parsed.coachLines = block.split('\n').map(l => l.trim()).filter(Boolean);
+        }
+      });
+
+      let html = '<div class="squad-layout body-text">';
+
+      // Two-column layout: left (GK + DEF), right (MID + ATT)
+      html += '<div class="squad-row">';
+
+      // Left column: Goalkeepers, then Defenders
+      html += '<div class="squad-col">';
+      if (parsed.goalkeepers && parsed.goalkeepers.items.length > 0) {
+        html += `<div class="squad-title">${escapeHtml(parsed.goalkeepers.title)}</div>`;
+        html += '<ul class="squad-list">';
+        parsed.goalkeepers.items.forEach(item => {
+          html += `<li>${escapeHtml(item)}</li>`;
+        });
+        html += '</ul>';
+      }
+      if (parsed.defenders && parsed.defenders.items.length > 0) {
+        html += `<div class="squad-title" style="margin-top:6px;">${escapeHtml(parsed.defenders.title)}</div>`;
+        html += '<ul class="squad-list">';
+        parsed.defenders.items.forEach(item => {
+          html += `<li>${escapeHtml(item)}</li>`;
+        });
+        html += '</ul>';
+      }
+      html += '</div>'; // end left col
+
+      // Right column: Midfielders, then Attackers
+      html += '<div class="squad-col">';
+      if (parsed.midfielders && parsed.midfielders.items.length > 0) {
+        html += `<div class="squad-title">${escapeHtml(parsed.midfielders.title)}</div>`;
+        html += '<ul class="squad-list">';
+        parsed.midfielders.items.forEach(item => {
+          html += `<li>${escapeHtml(item)}</li>`;
+        });
+        html += '</ul>';
+      }
+      if (parsed.attackers && parsed.attackers.items.length > 0) {
+        html += `<div class="squad-title" style="margin-top:6px;">${escapeHtml(parsed.attackers.title)}</div>`;
+        html += '<ul class="squad-list">';
+        parsed.attackers.items.forEach(item => {
+          html += `<li>${escapeHtml(item)}</li>`;
+        });
+        html += '</ul>';
+      }
+      html += '</div>'; // end right col
+
+      html += '</div>'; // end squad-row
+
+      // Coach centered underneath
+      if (parsed.coachLines && parsed.coachLines.length > 0) {
+        const coachLine = parsed.coachLines[0];
+        html += '<div class="squad-section squad-bottom">';
+        html += `<div class="squad-title">${escapeHtml(coachLine)}</div>`;
+        html += '</div>';
+      }
+
+      html += '</div>'; // end squad-layout
       return html;
     }
 

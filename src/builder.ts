@@ -35,6 +35,7 @@ export class StoryBuilder {
   private config: StoryConfig;
   private usedImages: Set<string> = new Set();
   private playerCache: Map<string, string> = new Map();
+  private squadsByTeamId: Map<string, any> = new Map();
 
   private static readonly IMAGE_POOL: string[] = [
     '21521989.jpg', '21521990.jpg', '21522003.jpg', '21522014.jpg',
@@ -106,6 +107,12 @@ export class StoryBuilder {
     // 1. Intro / cover page (no score)
     pages.push(this.buildCoverPage());
 
+    // 1b. Squad page for posting team (if configured and data available)
+    const squadPage = this.buildSquadPage();
+    if (squadPage) {
+      pages.push(squadPage);
+    }
+
     // 2. Highlight pages for key events
     const highlights = this.buildHighlightPages();
     const firstHalfHighlights = highlights.filter(h => h.minute <= 45);
@@ -123,6 +130,12 @@ export class StoryBuilder {
     // 4. Final summary page
     pages.push(this.buildSummaryPage());
 
+    // 5. Optional engagement page (only when posting team wins)
+    const motmPage = this.buildPlayerOfTheMatchPage();
+    if (motmPage) {
+      pages.push(motmPage);
+    }
+
     return pages;
   }
 
@@ -138,6 +151,95 @@ export class StoryBuilder {
       headline: `${homeTeam} vs ${awayTeam}`,
       subheadline: `${this.matchInfo.competition.knownName} • ${this.matchInfo.venue.longName} • ${this.formatDate(this.matchInfo.date)}`,
       image: this.reserveSpecificImage('21521989.jpg') // Use first available image (and ensure uniqueness)
+    };
+  }
+
+  /**
+   * Create squad info page for the configured posting team (teamId).
+   * Shows only active players and coach, grouped by position.
+   */
+  private buildSquadPage(): InfoPage | null {
+    const postingTeamId = this.config.teamId;
+    if (!postingTeamId) {
+      return null;
+    }
+
+    const squad = this.squadsByTeamId.get(postingTeamId);
+    if (!squad || !Array.isArray(squad.person)) {
+      return null;
+    }
+
+    const activePeople = squad.person.filter((p: any) => p.active === 'yes' || p.active === true || p.active === 'Y');
+    const players = activePeople.filter((p: any) => p.type === 'player');
+    const coach = activePeople.find((p: any) => p.type === 'coach');
+
+    if (players.length === 0 && !coach) {
+      return null;
+    }
+
+    // Group players by position
+    const playersByPosition: Record<string, any[]> = {};
+    players.forEach((p: any) => {
+      const pos = p.position || 'Other';
+      if (!playersByPosition[pos]) {
+        playersByPosition[pos] = [];
+      }
+      playersByPosition[pos].push(p);
+    });
+
+    // Determine team name and headline
+    const teamContestant = this.matchInfo.contestant.find(c => c.id === postingTeamId);
+    const teamName = teamContestant ? teamContestant.name : this.getTeamName(postingTeamId);
+    const isExplicitPostingTeam =
+      this.config.teamId !== null &&
+      this.config.teamId !== undefined &&
+      postingTeamId === this.config.teamId;
+
+    const headline = isExplicitPostingTeam ? 'Our Squad Today' : `${teamName} Squad`;
+
+    const bodyLines: string[] = [];
+    bodyLines.push('Squad for this match:');
+
+    const positionOrder = ['Goalkeeper', 'Defender', 'Midfielder', 'Attacker'];
+    const addedPositions = new Set<string>();
+
+    const pushPositionGroup = (position: string, label?: string) => {
+      const group = playersByPosition[position];
+      if (!group || group.length === 0) return;
+      addedPositions.add(position);
+
+      const lines: string[] = [];
+      lines.push(`${label || position}s:`);
+      group
+        .sort((a: any, b: any) => (a.shirtNumber || 0) - (b.shirtNumber || 0))
+        .forEach((p: any) => {
+          const number = p.shirtNumber ? `#${p.shirtNumber} ` : '';
+          const name = `${p.firstName} ${p.lastName}`.trim();
+          lines.push(`- ${number}${name}`);
+        });
+
+      bodyLines.push(lines.join('\n'));
+    };
+
+    // Preferred order
+    positionOrder.forEach(pos => pushPositionGroup(pos));
+
+    // Any remaining positions not in the preferred order
+    Object.keys(playersByPosition)
+      .filter(pos => !addedPositions.has(pos))
+      .sort()
+      .forEach(pos => pushPositionGroup(pos));
+
+    if (coach) {
+      const coachName = `${coach.firstName} ${coach.lastName}`.trim();
+      bodyLines.push(`Coach: ${coachName}`);
+    }
+
+    return {
+      type: 'info',
+      headline,
+      body: bodyLines.join('\n\n'),
+      image: this.reserveSpecificImage('21522071.jpg')
     };
   }
 
@@ -575,6 +677,49 @@ export class StoryBuilder {
   }
 
   /**
+   * Create an engaging final page asking fans for their player of the match,
+   * but only when the configured posting team (teamId) wins the game.
+   */
+  private buildPlayerOfTheMatchPage(): InfoPage | null {
+    if (!this.config.teamId) return null;
+
+    const goals = this.events.filter(e => e.type === 'goal' || e.type === 'penalty goal');
+    const homeTeamId = this.matchInfo.contestant[0].id;
+    const awayTeamId = this.matchInfo.contestant[1].id;
+    const homeTeam = this.matchInfo.contestant[0].name;
+    const awayTeam = this.matchInfo.contestant[1].name;
+
+    const homeGoals = goals.filter(g => g.teamRef1 === homeTeamId).length;
+    const awayGoals = goals.filter(g => g.teamRef1 === awayTeamId).length;
+
+    const winnerTeamId =
+      homeGoals > awayGoals ? homeTeamId :
+      awayGoals > homeGoals ? awayTeamId :
+      null;
+
+    // Only show this page if the posting team actually won
+    if (!winnerTeamId || winnerTeamId !== this.config.teamId) {
+      return null;
+    }
+
+    const scoreLine = `${homeTeam} ${homeGoals}-${awayGoals} ${awayTeam}`;
+    const headline = 'Who was your Player of the Match?';
+    const bodyLines: string[] = [];
+
+    bodyLines.push(`Full Time: ${scoreLine}`);
+    bodyLines.push('');
+    bodyLines.push('We get the win today – now it\'s over to you. 👀');
+    bodyLines.push('Who stood out the most for you?');
+
+    return {
+      type: 'info',
+      headline,
+      body: bodyLines.join('\n'),
+      image: this.reserveSpecificImage('21522140.jpg')
+    };
+  }
+
+  /**
    * Helper: Get team name from team reference ID
    */
   private getTeamName(teamRef: string): string {
@@ -601,6 +746,9 @@ export class StoryBuilder {
         const squadData = JSON.parse(readFileSync(path, 'utf-8'));
         if (squadData.squad && Array.isArray(squadData.squad)) {
           squadData.squad.forEach((squad: any) => {
+            if (squad.contestantId) {
+              this.squadsByTeamId.set(squad.contestantId, squad);
+            }
             if (squad.contestantId === teamId && squad.person) {
               squad.person.forEach((person: any) => {
                 if (person.id && person.firstName && person.lastName) {
