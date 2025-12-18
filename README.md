@@ -190,8 +190,9 @@ Try the preview at http://localhost:3000 after running `npm run preview`
 
 ### Page Types
 1. **Cover**: Match intro (no score) with competition info
-2. **Highlight**: Goals with player names, penalties, key moments (with minute marker)
-3. **Info**: Half-time score page and final summary with match context
+2. **Info (Squad)**: Squad presentation for the posting team (from `teamId` in `story-config.json`)
+3. **Highlight**: Goals with player names, penalties, key moments (with minute marker)
+4. **Info**: Half-time score page, final summary with match context, and (when the posting team wins) a final engagement question ("Who was your Player of the Match?")
 
 ---
 

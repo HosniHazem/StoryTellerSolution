@@ -572,6 +572,36 @@ Better to ship a working solution for one use case than a complex framework for 
 
 ### Phase 2: Product Thinking
 
+#### Squad Presentation Page
+**Decision**: Add a dedicated squad info page after the cover for the posting team (based on `teamId`)
+
+**Reasoning**:
+- Gives fans context on who is involved in the match
+- Uses existing squad data files (`celtic-squad.json`, `kilmarnock-squad.json`)
+- Only shows active players and active coach for the configured team
+- Layout mirrors a tactical view (Goalkeepers/Defenders on one side, Midfielders/Attackers on the other, coach centered below)
+
+**Implementation**:
+- Loads squad data and indexes by `contestantId`
+- Builds a squad info page (`"Our Squad Today"` or `"{Team} Squad"`)
+- Groups players by position: Goalkeepers, Defenders, Midfielders, Attackers
+- Renders squad in a responsive two-column layout in `preview/index.html`
+
+#### End-of-Story Engagement (Player of the Match)
+**Decision**: Add an optional final info page asking "Who was your Player of the Match?" when the posting team wins
+
+**Reasoning**:
+- Increases engagement at the end of the story
+- Encourages fans to reflect on the match and key performers
+- Only appears when the configured `teamId` wins (avoids awkward prompts after losses or draws)
+
+**Implementation**:
+- Computes winner based on goals
+- If `teamId` is set and matches the winner, appends an extra `info` page:
+  - Headline: "Who was your Player of the Match?"
+  - Body: full-time score + short call-to-action
+- Uses a dedicated background image for this closing slide
+
 #### Share Functionality
 **Decision**: Comprehensive sharing menu with multiple export options
 

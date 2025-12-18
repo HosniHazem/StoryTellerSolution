@@ -550,6 +550,8 @@ After completing the core functionality, we implemented three phases of enhancem
 - Screen reader announcement system
 - Analytics tracking infrastructure
 - Performance optimization strategies
+- Initial layout and logic for squad presentation page ("Our Squad Today")
+- Initial implementation of end-of-story engagement (final Player of the Match page when the posting team wins)
 
 **What Worked**:
 - AI had excellent knowledge of accessibility best practices

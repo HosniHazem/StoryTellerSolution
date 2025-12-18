@@ -72,8 +72,9 @@ npm test
 
 ### 2. **Page Types**
    - **Cover**: Match intro (no score) with competition info
+   - **Info (Squad)**: Squad presentation for the posting team (only when `teamId` is configured and squad data exists)
    - **Highlight**: Goals, penalties, posts (chronological)
-   - **Info**: Half-time score page and final summary
+   - **Info**: Half-time score page, final summary, and an optional final engagement slide asking "Who was your Player of the Match?" when the posting team wins
 
 ### 3. **Preview Viewer** (`preview/index.html`)
    - Instagram/Snapchat-style story interface

@@ -65,6 +65,8 @@ npm run validate
 
 **Enhanced Story Features**:
 - ✅ Player names in headlines (personalized experience)
+- ✅ Squad presentation page for posting team (from `teamId`)
+- ✅ End-of-story engagement when posting team wins (Player of the Match question)
 - ✅ Match context (matchweek, stage, key players)
 - ✅ Auto-advance with pause (6 seconds per page)
 - ✅ Smooth transitions (fade animations)
