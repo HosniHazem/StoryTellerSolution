@@ -2,7 +2,7 @@
   "pack_id": "6lqto88nzncqhvtv45a0rmcyc",
   "title": "Celtic vs Kilmarnock",
   "source": "match_events",
-  "created_at": "2025-12-17T14:07:28.510Z",
+  "created_at": "2026-01-02T18:45:53.887Z",
   "metrics": {
     "total_events": 102,
     "total_goals": 4,
@@ -18,9 +18,15 @@
       "image": "../assets/21521989.jpg"
     },
     {
+      "type": "info",
+      "headline": "Our Squad Today",
+      "body": "Squad for this match:\n\nGoalkeepers:\n- #1 Kasper Peter Schmeichel\n- #12 Viljami Kari Veikko Sinisalo\n- #31 Ross Doohan\n\nDefenders:\n- #2 Alistair William Johnston\n- #4 Jahmai Simpson-Pusey\n- #5 Liam Scales\n- #6 Auston Levi-Jesaiah Trusty\n- #20 Cameron Robert Carter-Vickers\n- #25 Hayato Inamura\n- #36 Marcelo Josemir Saracchi Pintos\n- #47 Dane Murray\n- #51 Colby Donovan\n- #56 Anthony Ralston\n- #63 Kieran Tierney\n\nMidfielders:\n- #14 Luke McCowan\n- #27 Arne Engels\n- #28 Paulo Guilherme Gonçalves Bernardo\n- #41 Reo Hatate\n- #42 Callum William McGregor\n- #49 James Forrest\n\nAttackers:\n- #7 João Pedro Neves Filipe\n- #8 Erik Benjamin Nygren\n- #10 Michel-Ange Balikwisha\n- #13 Hyun-Jun Yang\n- #17 Kelechi Promise Ịheanachọ\n- #18 Shin Yamada\n- #19 Callum James Osmand\n- #23 Sebastian Tounekti\n- #24 Johnny Kenny\n- #38 Daizen Maeda\n\nCoach: Martin Hugh Michael O'Neill",
+      "image": "../assets/21522071.jpg"
+    },
+    {
       "type": "highlight",
       "minute": 8,
-      "headline": "🚨 Off the Post!",
+      "headline": "🚨 Johnny Kenny hits the post!",
       "caption": "We go close to scoring",
       "image": "../assets/21522414.jpg",
       "explanation": "Johnny Kenny (Celtic) hits the left post with a right footed shot from the left side of the box. Assisted by Luke McCowan."
@@ -28,7 +34,7 @@
     {
       "type": "highlight",
       "minute": 9,
-      "headline": "⚽ GOAL!",
+      "headline": "⚽ Johnny Kenny!",
       "caption": "We extend our advantage.",
       "image": "../assets/21522413.jpg",
       "explanation": "Goal! Celtic 1, Kilmarnock 0. Johnny Kenny (Celtic) left footed shot from very close range to the bottom left corner. Assisted by Reo Hatate."
@@ -36,7 +42,7 @@
     {
       "type": "highlight",
       "minute": 28,
-      "headline": "🚨 Off the Post!",
+      "headline": "🚨 Bruce Anderson hits the post!",
       "caption": "Kilmarnock threaten the goal",
       "image": "../assets/21522412.jpg",
       "explanation": "Bruce Anderson (Kilmarnock) hits the left post with a left footed shot from the left side of the six yard box. Assisted by Eddie Beach following a set piece situation."
@@ -50,7 +56,7 @@
     {
       "type": "highlight",
       "minute": 50,
-      "headline": "⚽ GOAL!",
+      "headline": "⚽ Kieran Tierney!",
       "caption": "We extend our advantage.",
       "image": "../assets/21521990.jpg",
       "explanation": "Goal! Celtic 2, Kilmarnock 0. Kieran Tierney (Celtic) left footed shot from outside the box to the bottom right corner. Assisted by Liam Scales."
@@ -58,7 +64,7 @@
     {
       "type": "highlight",
       "minute": 84,
-      "headline": "⚽ Turning the screw!",
+      "headline": "⚽ Daizen Maeda extends the lead!",
       "caption": "We tighten their grip on the match with another goal.",
       "image": "../assets/21522345.jpg",
       "explanation": "Goal! Celtic 3, Kilmarnock 0. Daizen Maeda (Celtic) right footed shot from the right side of the box to the bottom right corner. Assisted by Arne Engels with a through ball."
@@ -74,7 +80,7 @@
     {
       "type": "highlight",
       "minute": 92,
-      "headline": "⚽ Breakthrough from the spot!",
+      "headline": "⚽ Arne Engels from the spot!",
       "caption": "We open the scoring and set the tone of the match.",
       "image": "../assets/21522014.jpg",
       "explanation": "Goal! Celtic 4, Kilmarnock 0. Arne Engels (Celtic) converts the penalty with a right footed shot to the bottom left corner."
@@ -82,8 +88,14 @@
     {
       "type": "info",
       "headline": "We Won! 🏆",
-      "body": "Full Time: Celtic 4-0 Kilmarnock\n\nVenue: Celtic Park\nCompetition: Scottish Premiership\n\nWe take all three points with a dominant performance.",
+      "body": "Full Time: Celtic 4-0 Kilmarnock\n\nVenue: Celtic Park\nCompetition: Scottish Premiership\nMatchweek: 12\nStage: 1st Phase\n\n⚽ Arne Engels on the scoresheet\n\nWe take all three points with a dominant performance.",
       "image": "../assets/21522058.jpg"
+    },
+    {
+      "type": "info",
+      "headline": "Who was your Player of the Match?",
+      "body": "Full Time: Celtic 4-0 Kilmarnock\n\nWe get the win today – now it's over to you. 👀\nWho stood out the most for you?",
+      "image": "../assets/21522140.jpg"
     }
   ]
 }

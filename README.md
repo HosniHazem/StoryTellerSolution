@@ -552,7 +552,7 @@ This project was created as part of a hiring task for Storyteller.
 
 ## 👤 About
 
-**Developer**: [Your Name]  
+**Developer**: Hazem Hosni  
 **Position Applied**: Web SDK Engineer  
 **Company**: Storyteller  
 **Date**: December 2024
